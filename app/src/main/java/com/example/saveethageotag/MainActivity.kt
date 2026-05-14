@@ -7,9 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,24 +23,38 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
-import com.example.saveethageotag.ui.theme.PrimaryGreen
+import com.example.saveethageotag.ui.theme.LogoBlue
+import com.example.saveethageotag.ui.theme.LogoGold
 import com.example.saveethageotag.ui.theme.TextSecondary
+import com.example.saveethageotag.ui.viewmodels.ThemeViewModel
+import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
+import com.example.saveethageotag.ui.viewmodels.CapturesViewModel
+import com.example.saveethageotag.data.firebase.FirebaseManager
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.saveethageotag.ui.screens.*
 
 sealed class Screen(val route: String, val icon: ImageVector, val label: String) {
     object Start : Screen("start", Icons.Default.RocketLaunch, "Start")
     object VerifyCode : Screen("verify_code", Icons.Default.Shield, "Verify")
     object Scan : Screen("scan", Icons.Default.QrCodeScanner, "Scan")
+    object AR : Screen("ar", Icons.Default.ViewInAr, "AR")
     object Captures : Screen("captures", Icons.Default.History, "History")
     object About : Screen("about", Icons.Default.Info, "About")
     
     // Non-bottom-bar screens
     object Home : Screen("home", Icons.Default.CameraAlt, "Capture")
     object Preview : Screen("preview", Icons.Default.Preview, "Preview")
-    object Verified : Screen("verified", Icons.Default.Verified, "Verified")
-    object Details : Screen("details", Icons.Default.Info, "Details")
+    object Verified : Screen("verified/{verificationId}", Icons.Default.Verified, "Verified") {
+        fun createRoute(verificationId: String) = "verified/$verificationId"
+    }
+    object Details : Screen("details/{verificationId}", Icons.Default.Info, "Details") {
+        fun createRoute(verificationId: String) = "details/$verificationId"
+    }
     object TamperAnalysis : Screen("tamper_analysis", Icons.Default.BugReport, "Analysis")
+    object Settings : Screen("settings", Icons.Default.Settings, "Settings")
 }
 
 class MainActivity : ComponentActivity() {
@@ -45,25 +62,44 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SaveethaGeotagTheme {
-                MainApp()
+            val themeViewModel: ThemeViewModel = viewModel()
+            val captureViewModel: CaptureViewModel = viewModel()
+            val capturesViewModel: CapturesViewModel = viewModel()
+            val isDarkMode by themeViewModel.isDarkMode
+
+            val firebaseManager = remember { FirebaseManager(applicationContext) }
+            LaunchedEffect(Unit) {
+                firebaseManager.signInAnonymously { success: Boolean ->
+                    if (success) {
+                        // Signed in
+                    }
+                }
+            }
+            
+            SaveethaGeotagTheme(darkTheme = isDarkMode) {
+                MainApp(themeViewModel, captureViewModel, capturesViewModel)
             }
         }
     }
 }
 
 @Composable
-fun MainApp() {
+fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, capturesViewModel: CapturesViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
     val bottomNavItems = listOf(
+        Screen.Home,
         Screen.VerifyCode,
         Screen.Scan,
         Screen.Captures,
-        Screen.About
+        Screen.Settings
     )
+
+    fun navigateToVerified(id: String) {
+        navController.navigate(Screen.Verified.createRoute(id))
+    }
 
     Scaffold(
         bottomBar = {
@@ -73,10 +109,14 @@ fun MainApp() {
                     contentColor = Color.Black
                 ) {
                     bottomNavItems.forEach { screen ->
+                        val isSelected = currentDestination?.hierarchy?.any { 
+                            it.route?.split("/")?.firstOrNull() == screen.route.split("/").firstOrNull() 
+                        } == true
+                        
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = null) },
                             label = { Text(screen.label, fontSize = 10.sp) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = isSelected,
                             onClick = {
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
@@ -87,11 +127,11 @@ fun MainApp() {
                                 }
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryGreen,
-                                selectedTextColor = PrimaryGreen,
+                                selectedIconColor = LogoBlue,
+                                selectedTextColor = LogoBlue,
                                 unselectedIconColor = Color.Gray,
                                 unselectedTextColor = Color.Gray,
-                                indicatorColor = Color.Transparent
+                                indicatorColor = LogoBlue.copy(alpha = 0.1f)
                             )
                         )
                     }
@@ -112,22 +152,72 @@ fun MainApp() {
                 } 
             }
             composable(Screen.Home.route) { HomeScreen(
-                onCapture = { navController.navigate(Screen.Preview.route) }
+                captureViewModel = captureViewModel,
+                onCapture = { navController.navigate(Screen.Preview.route) },
+                onARClick = { navController.navigate(Screen.AR.route) },
+                onGalleryClick = { navController.navigate(Screen.Captures.route) },
+                onMenuClick = { navController.navigate(Screen.Settings.route) }
             ) }
             composable(Screen.Preview.route) { PreviewScreen(
-                onConfirm = { navController.navigate(Screen.Verified.route) }
+                captureViewModel = captureViewModel,
+                onConfirm = { id -> navigateToVerified(id) }
             ) }
-            composable(Screen.Verified.route) { VerifiedScreen(
-                onViewDetails = { navController.navigate(Screen.Details.route) }
-            ) }
-            composable(Screen.Details.route) { DetailsScreen() }
-            composable(Screen.Scan.route) { ScanScreen() }
+            composable(
+                Screen.Verified.route,
+                arguments = listOf(navArgument("verificationId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
+                VerifiedScreen(
+                    verificationId = verificationId,
+                    onViewDetails = { 
+                        navController.navigate(Screen.Details.createRoute(verificationId))
+                    }
+                )
+            }
+            composable(Screen.Details.route, arguments = listOf(navArgument("verificationId") { type = NavType.StringType })) { backStackEntry ->
+                val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
+                DetailsScreen(
+                    verificationId = verificationId,
+                    onAnalysisClick = { navController.navigate(Screen.TamperAnalysis.route) }
+                )
+            }
+            composable(Screen.AR.route) { ARScreen(onBack = { navController.popBackStack() }) }
+            composable(Screen.Scan.route) { 
+                ScanScreen(
+                    onScanSuccess = { content ->
+                        // Handle raw scan content which might be the full metadata string or just an ID/Code
+                        if (content.contains("ID:")) {
+                            val id = content.substringAfter("ID:").substringBefore("|")
+                            navController.navigate(Screen.Details.createRoute(id))
+                        } else if (content.startsWith("GP-")) {
+                            // If it's a verification code, we need to resolve it (same as VerifyCodeScreen)
+                            // For simplicity in the UI flow, we navigate to VerifyCode with this value
+                            navController.navigate(Screen.VerifyCode.route)
+                        } else {
+                            navController.navigate(Screen.Details.createRoute(content))
+                        }
+                    }
+                ) 
+            }
             composable(Screen.VerifyCode.route) { VerifyCodeScreen(
-                onVerify = { navController.navigate(Screen.Verified.route) }
+                onVerify = { id -> navController.navigate(Screen.Details.createRoute(id)) }
             ) }
-            composable(Screen.Captures.route) { CapturesScreen() }
+            composable(Screen.Captures.route) { 
+                CapturesScreen(
+                    viewModel = capturesViewModel,
+                    onCaptureClick = { id ->
+                        navController.navigate(Screen.Details.createRoute(id))
+                    }
+                ) 
+            }
             composable(Screen.About.route) { AboutScreen() }
             composable(Screen.TamperAnalysis.route) { TamperAnalysisScreen() }
+            composable(Screen.Settings.route) { 
+                SettingsScreen(
+                    onAboutClick = { navController.navigate(Screen.About.route) },
+                    themeViewModel = themeViewModel
+                )
+            }
         }
     }
 }

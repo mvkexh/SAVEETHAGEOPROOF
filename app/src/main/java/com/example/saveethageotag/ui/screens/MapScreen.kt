@@ -15,30 +15,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.saveethageotag.ui.theme.DarkBackground
-import com.example.saveethageotag.ui.theme.PrimaryGreen
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
-import com.example.saveethageotag.ui.theme.TextSecondary
 
 @Composable
 fun MapScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background),
     ) {
         // Map Placeholder
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF0F172A))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
              // Mock Map Grid/Pins
              repeat(5) { index ->
                  Icon(
                      Icons.Default.LocationOn,
                      contentDescription = null,
-                     tint = PrimaryGreen,
+                     tint = MaterialTheme.colorScheme.tertiary,
                      modifier = Modifier
                          .offset(x = (50 + index * 40).dp, y = (100 + index * 60).dp)
                          .size(32.dp)
@@ -51,13 +48,13 @@ fun MapScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), RoundedCornerShape(12.dp))
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary)
+            Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.width(12.dp))
-            Text("Search verified locations...", color = TextSecondary, fontSize = 14.sp)
+            Text("Search verified locations...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         }
 
         // Floating Info Card
@@ -66,7 +63,7 @@ fun MapScreen() {
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
                 .fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(16.dp)
         ) {
             Row(
@@ -76,15 +73,15 @@ fun MapScreen() {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(PrimaryGreen.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = PrimaryGreen)
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Current Verification Site", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("Mumbai, Maharashtra · 3 active pins", color = TextSecondary, fontSize = 12.sp)
+                    Text("Current Verification Site", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Mumbai, Maharashtra · 3 active pins", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 }
             }
         }

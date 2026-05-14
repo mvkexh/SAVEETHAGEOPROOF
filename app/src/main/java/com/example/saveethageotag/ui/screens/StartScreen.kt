@@ -1,9 +1,11 @@
-package com.example.saveethageotag.ui.screens
+     package com.example.saveethageotag.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Public
@@ -20,120 +22,127 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.saveethageotag.R
-import com.example.saveethageotag.ui.theme.PrimaryGreen
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 
 @Composable
 fun StartScreen(onGetStarted: () -> Unit) {
-
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(horizontal = 24.dp),
-
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(MaterialTheme.colorScheme.background)
     ) {
-
-        // SAVEETHA LOGO
-        Image(
-            painter = painterResource(id = R.drawable.saveetha_logo),
-            contentDescription = "Saveetha Logo",
-
+        Column(
             modifier = Modifier
-                .size(220.dp)
-                .offset(y = 20.dp),
-
-            contentScale = ContentScale.Fit
-        )
-
-        // REMOVE EXTRA GAP
-        Spacer(modifier = Modifier.height((-20).dp))
-
-        // APP NAME
-        Text(
-            text = "GeoProof",
-
-            fontSize = 44.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // TAGLINE
-        Text(
-            text = "Capture. Verify. Trust.",
-
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.DarkGray
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // DESCRIPTION
-        Text(
-            text = "AI-Powered Geo-Tagged\nImage Verification",
-
-            fontSize = 16.sp,
-            lineHeight = 22.sp,
-            textAlign = TextAlign.Center,
-            color = Color.Gray
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // BOTTOM GLOBE ICON
-        Box(
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.weight(1f)) // Push content down a bit
 
-            Icon(
-                imageVector = Icons.Default.Public,
-                contentDescription = null,
+            // SAVEETHA LOGO
+            Box(
+                modifier = Modifier
+                    .size(180.dp)
+                    .padding(top = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.saveetha_logo),
+                    contentDescription = "Saveetha Logo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
-                tint = Color(0xFFE5E7EB),
-
-                modifier = Modifier.size(170.dp)
-            )
-
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = null,
-
-                tint = PrimaryGreen,
-
-                modifier = Modifier.size(42.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // BUTTON
-        Button(
-            onClick = onGetStarted,
-
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-
-            shape = RoundedCornerShape(14.dp),
-
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryGreen
-            )
-        ) {
-
+            // APP NAME
             Text(
-                text = "Get Started",
-
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                text = "GeoProof",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 2.sp
             )
+
+            // Increased gap between name and tagline
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // TAGLINE
+            Text(
+                text = "Capture. Verify. Trust.",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // DESCRIPTION
+            Text(
+                text = "AI-Powered Geo-Tagged\nImage Verification",
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // BOTTOM GLOBE ICON
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Public,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    modifier = Modifier.size(140.dp)
+                )
+
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f)) // Push button towards bottom
+
+            // BUTTON
+            Button(
+                onClick = onGetStarted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = "Get Started",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(60.dp)) // Space for footer
         }
+
+        // Footer Text (Fixed at bottom for better alignment on all devices)
+        Text(
+            text = "2024 © Saveetha Geotag | Disclaimer | Privacy Policy",
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+                .navigationBarsPadding(),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

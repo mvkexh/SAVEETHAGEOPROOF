@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -18,16 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.saveethageotag.ui.theme.PrimaryGreen
+import androidx.compose.ui.text.style.TextAlign
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
-import com.example.saveethageotag.ui.theme.TextSecondary
 
 @Composable
 fun TamperAnalysisScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
         // Header
@@ -35,19 +35,20 @@ fun TamperAnalysisScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
+                .background(MaterialTheme.colorScheme.primary)
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = {}) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.Black)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text(
                 "AI Analysis Report", 
-                color = Color.Black, 
+                color = MaterialTheme.colorScheme.onPrimary, 
                 fontSize = 18.sp, 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.width(48.dp))
         }
@@ -57,7 +58,7 @@ fun TamperAnalysisScreen() {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text("Tampering Check", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Tampering Check", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(16.dp))
 
             TamperCheckItem("Image Metadata", "No issues found")
@@ -74,23 +75,23 @@ fun TamperAnalysisScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .border(1.dp, Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
-            Text("Confidence Score", color = Color.Gray, fontSize = 14.sp)
+            Text("Confidence Score", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Mock Circular Chart
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .border(8.dp, PrimaryGreen, CircleShape),
+                        .border(8.dp, MaterialTheme.colorScheme.tertiary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("98.7%", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("98.7%", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Spacer(modifier = Modifier.width(24.dp))
-                Text("Authentic", color = PrimaryGreen, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                Text("Authentic", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold, fontSize = 24.sp)
             }
         }
     }
@@ -102,7 +103,7 @@ fun TamperCheckItem(label: String, status: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .border(1.dp, Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
             .padding(12.dp)
     ) {
         Row(
@@ -111,10 +112,10 @@ fun TamperCheckItem(label: String, status: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(label, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(status, color = Color.Gray, fontSize = 12.sp)
+                Text(label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(status, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
-            Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = PrimaryGreen)
+            Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
         }
     }
 }

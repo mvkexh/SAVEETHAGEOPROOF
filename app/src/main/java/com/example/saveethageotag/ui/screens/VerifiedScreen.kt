@@ -1,119 +1,236 @@
 package com.example.saveethageotag.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.saveethageotag.ui.theme.DarkBackground
-import com.example.saveethageotag.ui.theme.PrimaryGreen
+import coil.compose.AsyncImage
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
-import com.example.saveethageotag.ui.theme.TextSecondary
+import com.example.saveethageotag.utils.QRGenerator
+import com.example.saveethageotag.ui.viewmodels.DetailsViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VerifiedScreen(onViewDetails: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.Black)
-            }
-            Text(
-                "QR Generated", 
-                color = Color.Black, 
-                fontSize = 18.sp, 
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Spacer(modifier = Modifier.width(48.dp))
-        }
+fun VerifiedScreen(
+    verificationId: String,
+    viewModel: DetailsViewModel = viewModel(),
+    onViewDetails: () -> Unit
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState
+    
+    LaunchedEffect(verificationId) {
+        viewModel.fetchDetails(verificationId)
+    }
 
-        // Success Header
+    val infiniteTransition = rememberInfiniteTransition()
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("VERIFICATION SUCCESS", fontWeight = FontWeight.Black, fontSize = 18.sp, letterSpacing = 1.sp) },
+                navigationIcon = {
+                    IconButton(onClick = { /* Handle back */ }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { padding ->
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = PrimaryGreen, modifier = Modifier.size(64.dp))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("QR Code Generated", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Text("Successfully", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        }
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // Image Preview with QR
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-        ) {
-            // Mock Image Overlay
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Business, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(100.dp))
+            // Success Animation Header
+            Box(contentAlignment = Alignment.Center) {
+                Surface(
+                    modifier = Modifier.size(100.dp).graphicsLayer(alpha = pulseAlpha),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                ) {}
+                Icon(
+                    Icons.Default.Verified,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(64.dp)
+                )
             }
 
-            // Location/QR Overlay (Matching image)
+            Text(
+                "Authenticity Confirmed",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Text(
+                "Digital Signature Generated Successfully",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            // Main QR Card
             Card(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(12.dp)
+                    .padding(24.dp)
                     .fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.7f)),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Small Map
-                    Box(modifier = Modifier.size(50.dp).background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp)))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Chennai, Tamil Nadu, India", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                        Text("Saveetha Nagar, Thandalam...", color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
-                    }
-                    // QR Code
-                    Box(
-                        modifier = Modifier.size(40.dp).background(Color.White, RoundedCornerShape(2.dp)),
-                        contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "VERIFICATION CODE",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                     ) {
-                        Icon(Icons.Default.QrCode2, contentDescription = null, tint = Color.Black, modifier = Modifier.size(35.dp))
+                        Box(contentAlignment = Alignment.Center) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                            } else {
+                                Text(
+                                    text = uiState.verificationCode ?: "GP-PENDING",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    letterSpacing = 4.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        "This code authenticates this image's metadata",
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // Preview of the actual captured image
+            Text(
+                "SOURCE IMAGE PREVIEW",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Start).padding(start = 24.dp)
+            )
+            
+            Card(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .height(120.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Box {
+                    AsyncImage(
+                        model = uiState.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))
+                                )
+                            )
+                    )
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.LocationOn, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            uiState.address,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            maxLines = 1
+                        )
                     }
                 }
             }
-        }
-
-        // Details List
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            VerifiedDetailItemRow("Verification ID", "GP25A8X7K9L2", isHighlighted = true)
-            HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
-            VerifiedDetailItemRow("Captured on", "09 May 2026, 10:39 AM")
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -121,41 +238,17 @@ fun VerifiedScreen(onViewDetails: () -> Unit) {
                 onClick = onViewDetails,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("View Details", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Icon(Icons.Default.Visibility, null)
+                Spacer(Modifier.width(8.dp))
+                Text("View Full Security Report", fontWeight = FontWeight.Bold)
             }
-        }
-    }
-}
 
-@Composable
-fun VerifiedDetailItemRow(label: String, value: String, isHighlighted: Boolean = false) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, color = Color.Gray, fontSize = 14.sp)
-        if (isHighlighted) {
-            Surface(
-                color = PrimaryGreen.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(
-                    value, 
-                    color = PrimaryGreen, 
-                    fontSize = 14.sp, 
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                )
-            }
-        } else {
-            Text(value, color = Color.Black, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -164,6 +257,6 @@ fun VerifiedDetailItemRow(label: String, value: String, isHighlighted: Boolean =
 @Composable
 fun VerifiedScreenPreview() {
     SaveethaGeotagTheme {
-        VerifiedScreen(onViewDetails = {})
+        VerifiedScreen(verificationId = "GP-SAMPLE-ID", onViewDetails = {})
     }
 }

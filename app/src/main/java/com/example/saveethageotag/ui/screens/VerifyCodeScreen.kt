@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,33 +18,49 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.saveethageotag.ui.theme.DarkBackground
-import com.example.saveethageotag.ui.theme.PrimaryGreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.saveethageotag.ui.viewmodels.VerifyState
+import com.example.saveethageotag.ui.viewmodels.VerifyViewModel
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 import com.example.saveethageotag.ui.theme.TextSecondary
 
 @Composable
-fun VerifyCodeScreen(onVerify: () -> Unit) {
+fun VerifyCodeScreen(
+    viewModel: VerifyViewModel = viewModel(),
+    onVerify: (String) -> Unit
+) {
     var code by remember { mutableStateOf("") }
+    val state by viewModel.uiState.collectAsState()
+
+    // Handle navigation on success
+    LaunchedEffect(state) {
+        val currentState = state
+        if (currentState is VerifyState.Success) {
+            onVerify(currentState.docId)
+            viewModel.resetState()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background),
     ) {
         // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
+                .background(MaterialTheme.colorScheme.primary)
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = {}) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.Black)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text(
                 "Verify Image", 
-                color = Color.Black, 
+                color = MaterialTheme.colorScheme.onPrimary, 
                 fontSize = 18.sp, 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
@@ -62,7 +79,7 @@ fun VerifyCodeScreen(onVerify: () -> Unit) {
             Icon(
                 Icons.Default.VerifiedUser, 
                 contentDescription = null, 
-                tint = PrimaryGreen, 
+                tint = MaterialTheme.colorScheme.primary, 
                 modifier = Modifier.size(80.dp)
             )
             
@@ -70,13 +87,13 @@ fun VerifyCodeScreen(onVerify: () -> Unit) {
             
             Text(
                 "Enter Verification ID to", 
-                color = Color.Black, 
+                color = MaterialTheme.colorScheme.onSurface, 
                 fontSize = 18.sp, 
                 fontWeight = FontWeight.Bold
             )
             Text(
                 "check authenticity", 
-                color = Color.Black, 
+                color = MaterialTheme.colorScheme.onSurface, 
                 fontSize = 18.sp, 
                 fontWeight = FontWeight.Bold
             )
@@ -88,25 +105,42 @@ fun VerifyCodeScreen(onVerify: () -> Unit) {
                 onValueChange = { code = it },
                 placeholder = { Text("Enter Verification ID") },
                 modifier = Modifier.fillMaxWidth(),
+                textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PrimaryGreen,
-                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.2f),
-                    cursorColor = PrimaryGreen
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
                 shape = RoundedCornerShape(8.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            if (state is VerifyState.Error) {
+                Text(
+                    text = (state as VerifyState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             Button(
-                onClick = onVerify,
+                onClick = { viewModel.verifyCode(code) },
+                enabled = state !is VerifyState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Verify Now", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (state is VerifyState.Loading) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Verify Now", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -115,10 +149,10 @@ fun VerifyCodeScreen(onVerify: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                     .padding(16.dp)
             ) {
-                Text("How it works?", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("How it works?", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 WorkStep("1", "Enter Verification ID")
@@ -138,14 +172,14 @@ fun WorkStep(number: String, text: String) {
         Surface(
             modifier = Modifier.size(24.dp),
             shape = CircleShape,
-            color = PrimaryGreen
+            color = MaterialTheme.colorScheme.primary
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(number, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(number, color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text, color = Color.Gray, fontSize = 14.sp)
+        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
     }
 }
 

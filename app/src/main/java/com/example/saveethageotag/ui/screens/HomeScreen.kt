@@ -1,5 +1,21 @@
 package com.example.saveethageotag.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.location.Geocoder
+import android.util.Log
+import android.view.ViewGroup
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import java.util.Locale
+import androidx.camera.core.ImageCaptureException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -7,34 +23,282 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.saveethageotag.ui.theme.DarkBackground
-import com.example.saveethageotag.ui.theme.PrimaryGreen
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
-import com.example.saveethageotag.ui.theme.TextSecondary
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
 
 @Composable
-fun HomeScreen(onCapture: () -> Unit) {
+fun HomeScreen(
+    captureViewModel: CaptureViewModel?,
+    onCapture: () -> Unit,
+    onARClick: () -> Unit,
+    onGalleryClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {}
+) {
+    val isPreview = LocalInspectionMode.current
+    
+    // In Preview mode, we skip the permission check as it requires an Activity context
+    // which is not available in Compose Previews.
+    if (isPreview) {
+        CameraContent(captureViewModel, onCapture, onARClick, onGalleryClick, onMenuClick)
+    } else {
+        HomeScreenWithPermissions(captureViewModel, onCapture, onARClick, onGalleryClick, onMenuClick)
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun HomeScreenWithPermissions(
+    captureViewModel: CaptureViewModel?,
+    onCapture: () -> Unit,
+    onARClick: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onMenuClick: () -> Unit
+) {
+    val permissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
+    LaunchedEffect(Unit) {
+        permissionsState.launchMultiplePermissionRequest()
+    }
+
+    if (permissionsState.allPermissionsGranted) {
+        CameraContent(captureViewModel, onCapture, onARClick, onGalleryClick, onMenuClick)
+    } else {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Permissions required to use the camera and geotagging",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+                Button(onClick = { permissionsState.launchMultiplePermissionRequest() }) {
+                    Text("Grant Permissions")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CameraContent(
+    captureViewModel: CaptureViewModel?,
+    onCapture: () -> Unit,
+    onARClick: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onMenuClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val isPreview = LocalInspectionMode.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    
+    // Use remember(isPreview) to avoid initializing these providers in Preview mode
+    // as they may cause crashes or unexpected behavior.
+    val cameraProviderFuture = remember(isPreview) { 
+        if (isPreview) null else ProcessCameraProvider.getInstance(context) 
+    }
+    
+    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+    var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
+    var flashMode by remember { mutableIntStateOf(ImageCapture.FLASH_MODE_OFF) }
+    
+    var currentAddress by remember { mutableStateOf("Fetching location...") }
+    var currentAccuracy by remember { mutableStateOf("...") }
+    var lastLocation: android.location.Location? by remember { mutableStateOf(null) }
+
+    val fusedLocationClient = remember(isPreview) { 
+        if (isPreview) null else LocationServices.getFusedLocationProviderClient(context) 
+    }
+
+    // Update flash mode without re-binding
+    LaunchedEffect(flashMode) {
+        imageCapture?.flashMode = flashMode
+    }
+
+    // Continuous Location Updates
+    LaunchedEffect(Unit) {
+        if (isPreview || fusedLocationClient == null) return@LaunchedEffect
+        
+        val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY, 5000
+        ).build()
+
+        val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+            override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
+                result.lastLocation?.let { location ->
+                    lastLocation = location
+                    currentAccuracy = "Accuracy: ${String.format("%.1f", location.accuracy)} m"
+                    
+                    // Geocode in background
+                    try {
+                        val geocoder = Geocoder(context, Locale.getDefault())
+                        if (android.os.Build.VERSION.SDK_INT >= 33) {
+                            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                                if (addresses.isNotEmpty()) {
+                                    currentAddress = addresses[0].getAddressLine(0)
+                                }
+                            }
+                        } else {
+                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                            if (!addresses.isNullOrEmpty()) {
+                                currentAddress = addresses[0].getAddressLine(0)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        currentAddress = "Lat: ${String.format("%.4f", location.latitude)}, Lon: ${String.format("%.4f", location.longitude)}"
+                    }
+                }
+            }
+        }
+
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                android.os.Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            Log.e("HomeScreen", "Location permission missing", e)
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        // Handle selected image if needed
+    }
+
+    // Re-bind camera ONLY when lens facing or provider changes
+    val previewView = remember { PreviewView(context) }
+    LaunchedEffect(lensFacing, cameraProviderFuture) {
+        if (isPreview || cameraProviderFuture == null) return@LaunchedEffect
+        
+        val cameraProvider = cameraProviderFuture.get()
+        val preview = Preview.Builder().build()
+        val selector = CameraSelector.Builder()
+            .requireLensFacing(lensFacing)
+            .build()
+
+        val newImageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setFlashMode(flashMode)
+            .build()
+
+        try {
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                selector,
+                preview,
+                newImageCapture
+            )
+            preview.setSurfaceProvider(previewView.surfaceProvider)
+            imageCapture = newImageCapture
+        } catch (e: Exception) {
+            Log.e("CameraContent", "Use case binding failed", e)
+        }
+    }
+
+    fun takePhoto() {
+        if (isPreview) {
+            onCapture()
+            return
+        }
+        val capture = imageCapture ?: return
+        
+        // Use current known location
+        val location = lastLocation
+        val timestamp = System.currentTimeMillis()
+        val photoFile = java.io.File(context.cacheDir, "capture_$timestamp.jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        capture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    captureViewModel?.updateCapture(
+                        file = photoFile,
+                        lat = location?.latitude ?: 0.0,
+                        lon = location?.longitude ?: 0.0,
+                        address = currentAddress,
+                        accuracy = currentAccuracy
+                    )
+                    onCapture()
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e("HomeScreen", "Photo capture failed: ${exception.message}", exception)
+                }
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        // Camera Viewfinder (Placeholder)
+        // Camera Viewfinder
+        if (isPreview) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 64.dp, bottom = 140.dp)
+                    .background(Color.DarkGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Camera Preview Placeholder", color = Color.White)
+            }
+        } else {
+            AndroidView(
+                factory = { 
+                    previewView.apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                    }
+                },
+                update = {
+                    // Update happens via LaunchedEffect
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 64.dp, bottom = 140.dp)
+            )
+        }
+
+
+        // Viewfinder Grid Overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 64.dp, bottom = 140.dp)
-                .background(Color(0xFF0A0A0A))
         ) {
-            // Viewfinder Grid
             Box(modifier = Modifier.fillMaxSize()) {
                 HorizontalDivider(modifier = Modifier.align(Alignment.Center).offset(y = (-80).dp), color = Color.White.copy(0.1f))
                 HorizontalDivider(modifier = Modifier.align(Alignment.Center).offset(y = 80.dp), color = Color.White.copy(0.1f))
@@ -51,9 +315,18 @@ fun HomeScreen(onCapture: () -> Unit) {
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.size(8.dp).background(PrimaryGreen, CircleShape))
+                val isLocationReady = lastLocation != null
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(if (isLocationReady) MaterialTheme.colorScheme.tertiary else Color.Red, CircleShape)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Live + GPS Connected", color = Color.White, fontSize = 12.sp)
+                Text(
+                    if (isLocationReady) "Live + GPS Connected" else "Searching for GPS...",
+                    color = Color.White,
+                    fontSize = 12.sp
+                )
             }
         }
 
@@ -62,16 +335,44 @@ fun HomeScreen(onCapture: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .padding(horizontal = 16.dp),
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Menu, contentDescription = null, tint = Color.White)
+            IconButton(onClick = onMenuClick) {
+                Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
-            Text("Capture Photo", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.FlashOn, contentDescription = null, tint = Color.White)
+            Text("Capture Photo", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            
+            Row {
+                IconButton(onClick = {
+                    lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                        CameraSelector.LENS_FACING_FRONT
+                    } else {
+                        CameraSelector.LENS_FACING_BACK
+                    }
+                }) {
+                    Icon(Icons.Default.FlipCameraAndroid, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                }
+                
+                IconButton(onClick = {
+                    flashMode = when (flashMode) {
+                        ImageCapture.FLASH_MODE_OFF -> ImageCapture.FLASH_MODE_ON
+                        ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_AUTO
+                        else -> ImageCapture.FLASH_MODE_OFF
+                    }
+                }) {
+                    Icon(
+                        imageVector = when (flashMode) {
+                            ImageCapture.FLASH_MODE_ON -> Icons.Default.FlashOn
+                            ImageCapture.FLASH_MODE_AUTO -> Icons.Default.FlashAuto
+                            else -> Icons.Default.FlashOff
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
 
@@ -80,7 +381,7 @@ fun HomeScreen(onCapture: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(bottom = 16.dp)
         ) {
             // Location Box
@@ -88,26 +389,26 @@ fun HomeScreen(onCapture: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(alpha = 0.5f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = PrimaryGreen, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            "Saveetha Nagar, Thandalam, Chennai, Tamil Nadu 602105, India",
-                            color = Color.White,
+                            currentAddress,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            "Accuracy: 6.5 m  ± 3.0 m",
-                            color = TextSecondary,
+                            currentAccuracy,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 11.sp
                         )
                     }
@@ -123,41 +424,48 @@ fun HomeScreen(onCapture: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Image, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                    IconButton(onClick = { 
+                        try {
+                            galleryLauncher.launch("image/*")
+                        } catch (e: Exception) {
+                            onGalleryClick() 
+                        }
+                    }) {
+                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                     }
-                    Text("Gallery", color = TextSecondary, fontSize = 10.sp)
+                    Text("Gallery", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
 
                 Surface(
-                    onClick = onCapture,
+                    onClick = { takePhoto() },
                     modifier = Modifier.size(72.dp),
                     shape = CircleShape,
                     color = Color.Transparent,
-                    border = androidx.compose.foundation.BorderStroke(4.dp, Color.White)
+                    border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.onSurface)
                 ) {
                     Box(
                         modifier = Modifier
                             .padding(6.dp)
-                            .background(Color.White, CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurface, CircleShape)
                     )
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.FlipCameraIos, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                    IconButton(onClick = onARClick) {
+                        Icon(Icons.Default.ViewInAr, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                     }
-                    Text("Switch Camera", color = TextSecondary, fontSize = 10.sp)
+                    Text("AR View", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@ComposePreview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     SaveethaGeotagTheme {
-        HomeScreen {}
+        // Passing null for ViewModel in preview to avoid Firebase initialization issues
+        HomeScreen(captureViewModel = null, onCapture = {}, onARClick = {})
     }
 }
