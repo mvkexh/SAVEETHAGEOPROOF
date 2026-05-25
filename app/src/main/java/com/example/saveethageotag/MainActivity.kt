@@ -1,6 +1,9 @@
 package com.example.saveethageotag
 
 import android.os.Bundle
+import android.util.Log
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.MapsInitializer.Renderer
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -41,6 +44,7 @@ sealed class Screen(val route: String, val icon: ImageVector, val label: String)
     object VerifyCode : Screen("verify_code", Icons.Default.Shield, "Verify")
     object Scan : Screen("scan", Icons.Default.QrCodeScanner, "Scan")
     object AR : Screen("ar", Icons.Default.ViewInAr, "AR")
+    object Map : Screen("map", Icons.Default.Map, "Map")
     object Captures : Screen("captures", Icons.Default.History, "History")
     object About : Screen("about", Icons.Default.Info, "About")
     
@@ -60,6 +64,15 @@ sealed class Screen(val route: String, val icon: ImageVector, val label: String)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Maps with the latest renderer to fix blank map issues
+        MapsInitializer.initialize(applicationContext, Renderer.LATEST) { renderer ->
+            when (renderer) {
+                Renderer.LATEST -> Log.d("MainActivity", "The latest version of renderer is used.")
+                Renderer.LEGACY -> Log.d("MainActivity", "The legacy version of renderer is used.")
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = viewModel()
@@ -91,6 +104,7 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
     
     val bottomNavItems = listOf(
         Screen.Home,
+        Screen.Map,
         Screen.VerifyCode,
         Screen.Scan,
         Screen.Captures,
@@ -169,6 +183,7 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
                 val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
                 VerifiedScreen(
                     verificationId = verificationId,
+                    onBack = { navController.popBackStack() },
                     onViewDetails = { 
                         navController.navigate(Screen.Details.createRoute(verificationId))
                     }
@@ -178,10 +193,26 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
                 val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
                 DetailsScreen(
                     verificationId = verificationId,
+                    onBack = { navController.popBackStack() },
                     onAnalysisClick = { navController.navigate(Screen.TamperAnalysis.route) }
                 )
             }
-            composable(Screen.AR.route) { ARScreen(onBack = { navController.popBackStack() }) }
+            composable(Screen.AR.route) { 
+                ARScreen(
+                    captureViewModel = captureViewModel,
+                    onBack = { navController.popBackStack() },
+                    onCapture = { navController.navigate(Screen.Preview.route) }
+                ) 
+            }
+            composable(Screen.Captures.route) { 
+                CapturesScreen(
+                    viewModel = capturesViewModel,
+                    onCaptureClick = { id ->
+                        navController.navigate(Screen.Details.createRoute(id))
+                    }
+                ) 
+            }
+            composable("map") { MapScreen(viewModel = capturesViewModel) }
             composable(Screen.Scan.route) { 
                 ScanScreen(
                     onScanSuccess = { content ->
@@ -200,16 +231,9 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
                 ) 
             }
             composable(Screen.VerifyCode.route) { VerifyCodeScreen(
+                onBack = { navController.popBackStack() },
                 onVerify = { id -> navController.navigate(Screen.Details.createRoute(id)) }
             ) }
-            composable(Screen.Captures.route) { 
-                CapturesScreen(
-                    viewModel = capturesViewModel,
-                    onCaptureClick = { id ->
-                        navController.navigate(Screen.Details.createRoute(id))
-                    }
-                ) 
-            }
             composable(Screen.About.route) { AboutScreen() }
             composable(Screen.TamperAnalysis.route) { TamperAnalysisScreen() }
             composable(Screen.Settings.route) { 

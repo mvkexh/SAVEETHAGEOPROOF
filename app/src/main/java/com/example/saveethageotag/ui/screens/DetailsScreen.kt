@@ -1,5 +1,6 @@
 package com.example.saveethageotag.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,9 +11,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,11 +23,13 @@ import androidx.compose.ui.unit.sp
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 
 import androidx.compose.ui.text.style.TextAlign
+import coil.compose.AsyncImage
 
 import com.example.saveethageotag.ui.viewmodels.DetailsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,9 +38,11 @@ import java.util.Locale
 fun DetailsScreen(
     verificationId: String = "GP25A8X7K9L2",
     viewModel: DetailsViewModel = viewModel(),
+    onBack: () -> Unit = {},
     onAnalysisClick: () -> Unit = {}
 ) {
     val state = viewModel.uiState.value
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     LaunchedEffect(verificationId) {
         viewModel.fetchDetails(verificationId)
@@ -43,8 +50,10 @@ fun DetailsScreen(
 
     val dateString = if (state.timestamp > 0) {
         SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(state.timestamp))
-    } else {
+    } else if (state.isLoading) {
         "Fetching..."
+    } else {
+        "N/A"
     }
 
     Column(
@@ -62,7 +71,7 @@ fun DetailsScreen(
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text(
@@ -84,7 +93,7 @@ fun DetailsScreen(
             }
         } else if (state.errorMessage != null) {
             Text(
-                text = state.errorMessage!!,
+                text = state.errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(16.dp)
             )
@@ -98,20 +107,44 @@ fun DetailsScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(modifier = Modifier.padding(12.dp)) {
-                    // Mock Map Image or Actual Image
+                    // Actual Image Preview
                     Box(
                         modifier = Modifier
                             .size(80.dp)
                             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Map, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(40.dp))
+                        val imageSource = remember(state.localImagePath, state.imageUrl) {
+                            if (!state.localImagePath.isNullOrEmpty()) {
+                                java.io.File(state.localImagePath)
+                            } else {
+                                state.imageUrl as Any?
+                            }
+                        }
+                        
+                        if (imageSource != null) {
+                            AsyncImage(
+                                model = imageSource,
+                                contentDescription = null,
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                                onError = {
+                                    Log.e("DetailsScreen", "Failed to load image: ${it.result.throwable.message}")
+                                }
+                            )
+                        } else {
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
+                                contentDescription = null,
+                                modifier = Modifier.size(50.dp).padding(4.dp)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(state.address.split(",").firstOrNull() ?: "Location", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(state.address, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                        Text(state.address.ifEmpty { "Loading address..." }, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         Text("Lat ${state.latitude}, Long ${state.longitude}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         Text(dateString, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     }
@@ -135,6 +168,47 @@ fun DetailsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // QR Code Section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Verification QR Code", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    val qrBitmap = remember(state.verificationCode) {
+                        Log.d("DetailsScreen", "Generating QR for: ${state.verificationCode}")
+                        state.verificationCode?.let { com.example.saveethageotag.utils.QRGenerator.generateQRCode(it, 400) }
+                    }
+                    
+                    if (qrBitmap != null) {
+                        Image(
+                            bitmap = qrBitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.size(150.dp)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
                 onClick = onAnalysisClick,
                 modifier = Modifier
@@ -153,7 +227,34 @@ fun DetailsScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = {},
+            onClick = {
+                // Implementation of Share/Download Report
+                // For now, it shows the system share sheet with details
+                val shareIntent = android.content.Intent().apply {
+                    action = android.content.Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Verification Report: ${state.verificationCode}")
+                    putExtra(android.content.Intent.EXTRA_TEXT, """
+                        📸 GEO-PROOF VERIFICATION REPORT
+                        -------------------------------
+                        Status: ✅ AUTHENTIC
+                        Code: ${state.verificationCode}
+                        Captured on: $dateString
+                        
+                        LOCATION DETAILS
+                        Address: ${state.address}
+                        Coordinates: ${state.latitude}, ${state.longitude}
+                        Accuracy: ${state.accuracy}
+                        
+                        DEVICE INFO
+                        Model: ${android.os.Build.MODEL}
+                        
+                        Verified by Saveetha Geotag Security
+                        -------------------------------
+                    """.trimIndent())
+                }
+                context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Report"))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)

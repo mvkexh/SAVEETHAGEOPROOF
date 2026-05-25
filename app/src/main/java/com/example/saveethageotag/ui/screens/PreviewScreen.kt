@@ -107,14 +107,18 @@ fun PreviewScreen(captureViewModel: CaptureViewModel?, onConfirm: (String) -> Un
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Row(modifier = Modifier.padding(8.dp)) {
-                    // Small Map Placeholder
+                    // Small Logo Overlay
                     Box(
                         modifier = Modifier
                             .size(60.dp)
-                            .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp)),
+                            .background(Color.White, RoundedCornerShape(4.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Map, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(30.dp))
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().padding(4.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {

@@ -64,7 +64,7 @@ fun CapturesScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
-            "Historical logs of AI-authenticated images",
+            "Historical logs stored on device",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             modifier = Modifier.padding(bottom = 24.dp)
@@ -107,36 +107,51 @@ private fun shareCapture(context: android.content.Context, capture: CaptureHisto
         Verified by Saveetha Geotag
     """.trimIndent()
 
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val loader = context.imageLoader
-            val request = ImageRequest.Builder(context)
-                .data(capture.imageUrl)
-                .allowHardware(false)
-                .build()
-            
-            val result = loader.execute(request)
-            if (result is SuccessResult) {
-                val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
-                val cachePath = File(context.cacheDir, "images")
-                cachePath.mkdirs()
-                val file = File(cachePath, "share_image_${capture.id}.jpg")
-                val stream = FileOutputStream(file)
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, stream)
-                stream.close()
+    // Use local file directly if it exists, otherwise download (fallback)
+    val localFile = if (capture.localImagePath.isNotEmpty()) File(capture.localImagePath) else null
+    
+    if (localFile != null && localFile.exists()) {
+        val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", localFile)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/jpeg"
+            putExtra(Intent.EXTRA_STREAM, contentUri)
+            putExtra(Intent.EXTRA_TEXT, shareText)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Share Capture"))
+    } else {
+        // Fallback for cloud URLs if any exist from before
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val loader = context.imageLoader
+                val request = ImageRequest.Builder(context)
+                    .data(capture.imageUrl)
+                    .allowHardware(false)
+                    .build()
+                
+                val result = loader.execute(request)
+                if (result is SuccessResult) {
+                    val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                    val cachePath = File(context.cacheDir, "images")
+                    cachePath.mkdirs()
+                    val file = File(cachePath, "share_image_${capture.id}.jpg")
+                    val stream = FileOutputStream(file)
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 100, stream)
+                    stream.close()
 
-                val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                    val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "image/jpeg"
-                    putExtra(Intent.EXTRA_STREAM, contentUri)
-                    putExtra(Intent.EXTRA_TEXT, shareText)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "image/jpeg"
+                        putExtra(Intent.EXTRA_STREAM, contentUri)
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Share Capture"))
                 }
-                context.startActivity(Intent.createChooser(intent, "Share Capture"))
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 }
@@ -162,8 +177,11 @@ fun CaptureCard(capture: CaptureHistoryItem, onClick: (String) -> Unit, onShareC
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
             ) {
+                // Try local path first, then imageUrl
+                val imageSource = if (capture.localImagePath.isNotEmpty()) File(capture.localImagePath) else capture.imageUrl
+                
                 AsyncImage(
-                    model = capture.imageUrl,
+                    model = imageSource,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

@@ -25,6 +25,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import android.widget.Toast
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,9 +47,11 @@ import java.util.Locale
 fun VerifiedScreen(
     verificationId: String,
     viewModel: DetailsViewModel = viewModel(),
+    onBack: () -> Unit,
     onViewDetails: () -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val uiState by viewModel.uiState
     
     LaunchedEffect(verificationId) {
@@ -68,7 +73,7 @@ fun VerifiedScreen(
             CenterAlignedTopAppBar(
                 title = { Text("VERIFICATION SUCCESS", fontWeight = FontWeight.Black, fontSize = 18.sp, letterSpacing = 1.sp) },
                 navigationIcon = {
-                    IconButton(onClick = { /* Handle back */ }) {
+                    IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
@@ -148,10 +153,43 @@ fun VerifiedScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // QR Code Display
+                    Box(
+                        modifier = Modifier
+                            .size(180.dp)
+                            .background(Color.White, RoundedCornerShape(12.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator()
+                        } else {
+                            val qrBitmap = remember(uiState.verificationCode) {
+                                uiState.verificationCode?.let { QRGenerator.generateQRCode(it, 512) }
+                            }
+                            qrBitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = "Verification QR Code",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } ?: Icon(Icons.Default.QrCode, null, modifier = Modifier.size(64.dp), tint = Color.Gray.copy(alpha = 0.3f))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp),
+                            .height(80.dp)
+                            .clickable {
+                                uiState.verificationCode?.let {
+                                    clipboardManager.setText(AnnotatedString(it))
+                                    Toast.makeText(context, "Code copied to clipboard", Toast.LENGTH_SHORT).show()
+                                }
+                            },
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(16.dp),
                         border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
@@ -160,17 +198,41 @@ fun VerifiedScreen(
                             if (uiState.isLoading) {
                                 CircularProgressIndicator(modifier = Modifier.size(32.dp))
                             } else {
-                                Text(
-                                    text = uiState.verificationCode ?: "GP-PENDING",
-                                    style = MaterialTheme.typography.displaySmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    letterSpacing = 4.sp
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                ) {
+                                    Text(
+                                        text = uiState.verificationCode ?: "GP-PENDING",
+                                        style = MaterialTheme.typography.displaySmall,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                        letterSpacing = 2.sp,
+                                        modifier = Modifier.weight(1f),
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Icon(
+                                        Icons.Default.ContentCopy,
+                                        contentDescription = "Copy",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        "Tap the code to copy it",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -199,8 +261,14 @@ fun VerifiedScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Box {
+                    val imageSource = if (!uiState.localImagePath.isNullOrEmpty()) {
+                        java.io.File(uiState.localImagePath!!)
+                    } else {
+                        uiState.imageUrl
+                    }
+                    
                     AsyncImage(
-                        model = uiState.imageUrl,
+                        model = imageSource,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -257,6 +325,6 @@ fun VerifiedScreen(
 @Composable
 fun VerifiedScreenPreview() {
     SaveethaGeotagTheme {
-        VerifiedScreen(verificationId = "GP-SAMPLE-ID", onViewDetails = {})
+        VerifiedScreen(verificationId = "GP-SAMPLE-ID", onBack = {}, onViewDetails = {})
     }
 }

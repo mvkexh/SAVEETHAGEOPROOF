@@ -31,10 +31,12 @@ import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.util.concurrent.Executors
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.PhotoLibrary
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -94,7 +96,7 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Code Scan Preview Placeholder", color = Color.White)
+                Text("QR Scanner Preview Placeholder", color = Color.White)
             }
         } else {
             AndroidView(
@@ -117,8 +119,9 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
                     val mainExecutor = ContextCompat.getMainExecutor(ctx)
                     imageAnalysis.setAnalyzer(
                         Executors.newSingleThreadExecutor(),
-                        CodeAnalyzer { result ->
+                        QRAnalyzer { result ->
                             mainExecutor.execute {
+                                Log.d("GeoProof_Scanner", "scanner result: $result")
                                 onScanSuccess(result)
                             }
                         }
@@ -136,7 +139,7 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
                             )
                             preview.setSurfaceProvider(previewView.surfaceProvider)
                         } catch (e: Exception) {
-                            Log.e("ScanContent", "Use case binding failed", e)
+                            Log.e("GeoProof_Scanner", "Use case binding failed", e)
                         }
                     }, ContextCompat.getMainExecutor(ctx))
                     
@@ -152,13 +155,13 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(280.dp, 120.dp)
+                    .size(280.dp, 280.dp)
                     .align(Alignment.Center)
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
             ) {
                 // Corner Accents
-                val cornerSize = 20.dp
-                val strokeWidth = 3.dp
+                val cornerSize = 24.dp
+                val strokeWidth = 4.dp
                 
                 Box(modifier = Modifier.size(cornerSize).align(Alignment.TopStart).border(strokeWidth, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(topStart = 12.dp)))
                 Box(modifier = Modifier.size(cornerSize).align(Alignment.TopEnd).border(strokeWidth, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(topEnd = 12.dp)))
@@ -180,7 +183,7 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text(
-                "Scan Verification Code", 
+                "QR Verification Scan", 
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 18.sp, 
                 fontWeight = FontWeight.Bold,
@@ -194,16 +197,49 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center)
-                .padding(top = 180.dp),
+                .padding(top = 320.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Align the GP-CODE within the frame", color = Color.White, fontSize = 14.sp)
+            Text("Align the QR CODE within the frame", color = Color.White, fontSize = 14.sp)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            val galleryLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let {
+                    try {
+                        val image = InputImage.fromFilePath(context, it)
+                        val scanner = BarcodeScanning.getClient()
+                        scanner.process(image)
+                            .addOnSuccessListener { barcodes ->
+                                for (barcode in barcodes) {
+                                    barcode.rawValue?.let { content ->
+                                        onScanSuccess(content)
+                                    }
+                                }
+                            }
+                    } catch (e: Exception) {
+                        Log.e("ScanScreen", "Gallery scan failed", e)
+                    }
+                }
+            }
+
+            Button(
+                onClick = { galleryLauncher.launch("image/*") },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Select from Gallery")
+            }
         }
     }
 }
 
-class CodeAnalyzer(private val onScanSuccess: (String) -> Unit) : ImageAnalysis.Analyzer {
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+class QRAnalyzer(private val onScanSuccess: (String) -> Unit) : ImageAnalysis.Analyzer {
+    private val barcodeScanner = BarcodeScanning.getClient()
     private var isScanning = true
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
@@ -211,20 +247,17 @@ class CodeAnalyzer(private val onScanSuccess: (String) -> Unit) : ImageAnalysis.
         val mediaImage = imageProxy.image
         if (mediaImage != null && isScanning) {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-            recognizer.process(image)
-                .addOnSuccessListener { visionText ->
-                    if (isScanning) {
-                        // Look for patterns like GP-XXXXXXXX
-                        val pattern = Regex("GP-[A-Z0-9]{8}")
-                        val match = pattern.find(visionText.text.uppercase())
-                        if (match != null) {
+            
+            barcodeScanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    if (isScanning && barcodes.isNotEmpty()) {
+                        for (barcode in barcodes) {
+                            val rawValue = barcode.rawValue ?: continue
                             isScanning = false
-                            onScanSuccess(match.value)
+                            onScanSuccess(rawValue)
+                            break
                         }
                     }
-                }
-                .addOnFailureListener {
-                    Log.e("CodeAnalyzer", "Text recognition failed", it)
                 }
                 .addOnCompleteListener {
                     imageProxy.close()

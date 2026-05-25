@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 import com.example.saveethageotag.ui.viewmodels.ThemeViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-
 import com.example.saveethageotag.ui.viewmodels.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,63 +66,51 @@ fun SettingsScreen(
                 onCheckedChange = { themeViewModel.setDarkMode(it) }
             )
             
-            SettingsCategory("Security")
-            SettingsToggleItem(
-                icon = Icons.Default.Lock,
-                title = "Biometric Lock",
-                subtitle = "Secure app with fingerprint or face",
-                checked = biometricEnabled,
-                onCheckedChange = { settingsViewModel.toggleBiometric(it) }
-            )
-            SettingsToggleItem(
-                icon = Icons.Default.Security,
-                title = "Data Encryption",
-                subtitle = "Manage how your photos are secured",
-                checked = encryptionEnabled,
-                onCheckedChange = { settingsViewModel.toggleEncryption(it) }
+            SettingsCategory("Data Management")
+            SettingsClickItem(
+                icon = Icons.Default.DeleteSweep,
+                title = "Clear Cache",
+                subtitle = "Free up storage space",
+                onClick = { settingsViewModel.clearCache() }
             )
             
-            SettingsCategory("Notifications")
-            SettingsToggleItem(
-                icon = Icons.Default.Notifications,
-                title = "Verification Alerts",
-                subtitle = "Get notified when verification is complete",
-                checked = notificationsEnabled,
-                onCheckedChange = { settingsViewModel.toggleNotifications(it) }
+            SettingsCategory("Support & Help")
+            SettingsClickItem(
+                icon = Icons.Default.Help,
+                title = "Help Center",
+                subtitle = "Get support and troubleshooting",
+                onClick = { /* Navigate to help */ }
             )
-            
-            SettingsCategory("Camera Settings")
-            SettingsToggleItem(
-                icon = Icons.Default.GpsFixed,
-                title = "Location Metadata",
-                subtitle = "Capture GPS coordinates with every photo",
-                checked = locationMetadataEnabled,
-                onCheckedChange = { settingsViewModel.toggleLocationMetadata(it) }
+            SettingsClickItem(
+                icon = Icons.Default.PrivacyTip,
+                title = "Privacy Policy",
+                subtitle = "How we handle your data",
+                onClick = { /* Navigate to privacy */ }
             )
-            SettingsToggleItem(
-                icon = Icons.Default.Schedule,
-                title = "Timestamp Overlay",
-                subtitle = "Show date and time on captured images",
-                checked = timestampEnabled,
-                onCheckedChange = { settingsViewModel.toggleTimestamp(it) }
+            SettingsClickItem(
+                icon = Icons.Default.Gavel,
+                title = "Terms of Service",
+                subtitle = "Rules for using the app",
+                onClick = { /* Navigate to terms */ }
             )
-            
-            SettingsCategory("Support")
-            SettingsClickItem(Icons.Default.Help, "Help Center", "FAQs and troubleshooting")
+            SettingsClickItem(
+                icon = Icons.Default.Info,
+                title = "About App",
+                subtitle = "Version: ${settingsViewModel.appVersion}",
+                onClick = onAboutClick
+            )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Replaced Logout with About App button as requested
-            Button(
-                onClick = onAboutClick,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("About App", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Saveetha Geotag v${settingsViewModel.appVersion}",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -216,13 +203,5 @@ fun SettingsClickItem(icon: ImageVector, title: String, subtitle: String, onClic
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(16.dp)
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    SaveethaGeotagTheme {
-        SettingsScreen()
     }
 }

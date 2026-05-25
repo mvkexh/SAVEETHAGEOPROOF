@@ -45,7 +45,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
     implementation(libs.firebase.analytics)
 
     implementation(libs.androidx.navigation.compose)
@@ -64,6 +63,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
     implementation(libs.google.accompanist.permissions)
     implementation(libs.barcode.scanning)
     implementation(libs.text.recognition)

@@ -20,8 +20,12 @@ coil = "2.6.0"
 barcode-scanning = "17.3.0"
 text-recognition = "16.0.1"
 zxing = "3.5.4"
+playServicesMaps = "18.2.0"
+mapsCompose = "6.4.1"
 
 [libraries]
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }

@@ -9,8 +9,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.util.Locale
 import androidx.camera.core.ImageCaptureException
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
@@ -30,18 +28,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
 
 @Composable
@@ -53,9 +46,6 @@ fun HomeScreen(
     onMenuClick: () -> Unit = {}
 ) {
     val isPreview = LocalInspectionMode.current
-    
-    // In Preview mode, we skip the permission check as it requires an Activity context
-    // which is not available in Compose Previews.
     if (isPreview) {
         CameraContent(captureViewModel, onCapture, onARClick, onGalleryClick, onMenuClick)
     } else {
@@ -114,8 +104,6 @@ fun CameraContent(
     val isPreview = LocalInspectionMode.current
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    // Use remember(isPreview) to avoid initializing these providers in Preview mode
-    // as they may cause crashes or unexpected behavior.
     val cameraProviderFuture = remember(isPreview) { 
         if (isPreview) null else ProcessCameraProvider.getInstance(context) 
     }
@@ -132,12 +120,6 @@ fun CameraContent(
         if (isPreview) null else LocationServices.getFusedLocationProviderClient(context) 
     }
 
-    // Update flash mode without re-binding
-    LaunchedEffect(flashMode) {
-        imageCapture?.flashMode = flashMode
-    }
-
-    // Continuous Location Updates
     LaunchedEffect(Unit) {
         if (isPreview || fusedLocationClient == null) return@LaunchedEffect
         
@@ -151,7 +133,6 @@ fun CameraContent(
                     lastLocation = location
                     currentAccuracy = "Accuracy: ${String.format("%.1f", location.accuracy)} m"
                     
-                    // Geocode in background
                     try {
                         val geocoder = Geocoder(context, Locale.getDefault())
                         if (android.os.Build.VERSION.SDK_INT >= 33) {
@@ -161,6 +142,7 @@ fun CameraContent(
                                 }
                             }
                         } else {
+                            @Suppress("DEPRECATION")
                             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                             if (!addresses.isNullOrEmpty()) {
                                 currentAddress = addresses[0].getAddressLine(0)
@@ -180,19 +162,12 @@ fun CameraContent(
                 android.os.Looper.getMainLooper()
             )
         } catch (e: SecurityException) {
-            Log.e("HomeScreen", "Location permission missing", e)
+            Log.e("GeoProof_Home", "Location permission missing", e)
         }
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: android.net.Uri? ->
-        // Handle selected image if needed
-    }
-
-    // Re-bind camera ONLY when lens facing or provider changes
     val previewView = remember { PreviewView(context) }
-    LaunchedEffect(lensFacing, cameraProviderFuture) {
+    LaunchedEffect(lensFacing, cameraProviderFuture, flashMode) {
         if (isPreview || cameraProviderFuture == null) return@LaunchedEffect
         
         val cameraProvider = cameraProviderFuture.get()
@@ -217,7 +192,7 @@ fun CameraContent(
             preview.setSurfaceProvider(previewView.surfaceProvider)
             imageCapture = newImageCapture
         } catch (e: Exception) {
-            Log.e("CameraContent", "Use case binding failed", e)
+            Log.e("GeoProof_Home", "Use case binding failed", e)
         }
     }
 
@@ -228,17 +203,18 @@ fun CameraContent(
         }
         val capture = imageCapture ?: return
         
-        // Use current known location
         val location = lastLocation
         val timestamp = System.currentTimeMillis()
         val photoFile = java.io.File(context.cacheDir, "capture_$timestamp.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
+        Log.d("GeoProof_Home", "Capture: Initiating photo capture...")
         capture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Log.d("GeoProof_Home", "Capture: Photo saved to cache: ${photoFile.absolutePath}")
                     captureViewModel?.updateCapture(
                         file = photoFile,
                         lat = location?.latitude ?: 0.0,
@@ -250,7 +226,7 @@ fun CameraContent(
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    Log.e("HomeScreen", "Photo capture failed: ${exception.message}", exception)
+                    Log.e("GeoProof_Home", "Capture: Photo capture failed: ${exception.message}", exception)
                 }
             }
         )
@@ -261,7 +237,6 @@ fun CameraContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        // Camera Viewfinder
         if (isPreview) {
             Box(
                 modifier = Modifier
@@ -283,30 +258,18 @@ fun CameraContent(
                         scaleType = PreviewView.ScaleType.FILL_CENTER
                     }
                 },
-                update = {
-                    // Update happens via LaunchedEffect
-                },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 64.dp, bottom = 140.dp)
             )
         }
 
-
-        // Viewfinder Grid Overlay
+        // Top Status Badge
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 64.dp, bottom = 140.dp)
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                HorizontalDivider(modifier = Modifier.align(Alignment.Center).offset(y = (-80).dp), color = Color.White.copy(0.1f))
-                HorizontalDivider(modifier = Modifier.align(Alignment.Center).offset(y = 80.dp), color = Color.White.copy(0.1f))
-                VerticalDivider(modifier = Modifier.align(Alignment.Center).offset(x = (-80).dp), color = Color.White.copy(0.1f))
-                VerticalDivider(modifier = Modifier.align(Alignment.Center).offset(x = 80.dp), color = Color.White.copy(0.1f))
-            }
-
-            // Top Status Badge
             Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -341,7 +304,7 @@ fun CameraContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                Icon(Icons.Default.Menu, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text("Capture Photo", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             
@@ -390,27 +353,21 @@ fun CameraContent(
                     .fillMaxWidth()
                     .padding(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(24.dp))
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp)
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text(
-                            currentAddress,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            currentAccuracy,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
+                        Text(currentAddress, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(currentAccuracy, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     }
                 }
             }
@@ -424,16 +381,10 @@ fun CameraContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { 
-                        try {
-                            galleryLauncher.launch("image/*")
-                        } catch (e: Exception) {
-                            onGalleryClick() 
-                        }
-                    }) {
-                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
+                    IconButton(onClick = onGalleryClick) {
+                        Icon(Icons.Default.History, contentDescription = "History", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                     }
-                    Text("Gallery", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("History", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
 
                 Surface(
@@ -443,29 +394,16 @@ fun CameraContent(
                     color = Color.Transparent,
                     border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.onSurface)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(6.dp)
-                            .background(MaterialTheme.colorScheme.onSurface, CircleShape)
-                    )
+                    Box(modifier = Modifier.padding(6.dp).background(MaterialTheme.colorScheme.onSurface, CircleShape))
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(onClick = onARClick) {
-                        Icon(Icons.Default.ViewInAr, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
+                        Icon(Icons.Default.ViewInAr, contentDescription = "AR View", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
                     }
                     Text("AR View", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 }
             }
         }
-    }
-}
-
-@ComposePreview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    SaveethaGeotagTheme {
-        // Passing null for ViewModel in preview to avoid Firebase initialization issues
-        HomeScreen(captureViewModel = null, onCapture = {}, onARClick = {})
     }
 }

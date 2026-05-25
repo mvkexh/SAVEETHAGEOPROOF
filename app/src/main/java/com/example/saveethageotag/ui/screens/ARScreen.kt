@@ -3,6 +3,8 @@ package com.example.saveethageotag.ui.screens
 import android.util.Log
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -16,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,20 +36,77 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
+import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import android.location.Geocoder
+import java.util.Locale
 
 @Composable
-fun ARScreen(onBack: () -> Unit) {
+fun ARScreen(captureViewModel: CaptureViewModel?, onBack: () -> Unit, onCapture: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val previewView = remember { PreviewView(context) }
+    var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
 
     // Sensor state for AR movement
     var rotationX by remember { mutableStateOf(0f) }
     var rotationY by remember { mutableStateOf(0f) }
+    
+    // Location state for AR tags and capture
+    var currentAddress by remember { mutableStateOf("Fetching location...") }
+    var currentAccuracy by remember { mutableStateOf("...") }
+    var lastLocation: android.location.Location? by remember { mutableStateOf(null) }
 
     val sensorManager = remember { context.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager }
     val rotationSensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ROTATION_VECTOR)
+
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    LaunchedEffect(Unit) {
+        val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY, 5000
+        ).build()
+
+        val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+            override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
+                result.lastLocation?.let { location ->
+                    lastLocation = location
+                    currentAccuracy = "Accuracy: ${String.format("%.1f", location.accuracy)} m"
+                    
+                    try {
+                        val geocoder = Geocoder(context, Locale.getDefault())
+                        if (android.os.Build.VERSION.SDK_INT >= 33) {
+                            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                                if (addresses.isNotEmpty()) {
+                                    currentAddress = addresses[0].getAddressLine(0)
+                                }
+                            }
+                        } else {
+                            @Suppress("DEPRECATION")
+                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                            if (!addresses.isNullOrEmpty()) {
+                                currentAddress = addresses[0].getAddressLine(0)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        currentAddress = "Lat: ${String.format("%.4f", location.latitude)}, Lon: ${String.format("%.4f", location.longitude)}"
+                    }
+                }
+            }
+        }
+
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                android.os.Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            Log.e("ARScreen", "Location permission missing", e)
+        }
+    }
 
     DisposableEffect(Unit) {
         val listener = object : android.hardware.SensorEventListener {
@@ -76,13 +136,49 @@ fun ARScreen(onBack: () -> Unit) {
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
 
+        val newImageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .build()
+
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(lifecycleOwner, selector, preview)
+            cameraProvider.bindToLifecycle(lifecycleOwner, selector, preview, newImageCapture)
             preview.setSurfaceProvider(previewView.surfaceProvider)
+            imageCapture = newImageCapture
         } catch (e: Exception) {
             Log.e("ARScreen", "Camera binding failed", e)
         }
+    }
+
+    fun takePhoto() {
+        val capture = imageCapture ?: return
+        val location = lastLocation
+        val timestamp = System.currentTimeMillis()
+        val photoFile = java.io.File(context.cacheDir, "ar_capture_$timestamp.jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        Log.d("ARScreen", "AR Capture: Initiating photo capture...")
+        capture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Log.d("ARScreen", "AR Capture: Photo saved: ${photoFile.absolutePath}")
+                    captureViewModel?.updateCapture(
+                        file = photoFile,
+                        lat = location?.latitude ?: 0.0,
+                        lon = location?.longitude ?: 0.0,
+                        address = currentAddress,
+                        accuracy = currentAccuracy
+                    )
+                    onCapture()
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e("ARScreen", "AR Capture: Photo capture failed: ${exception.message}", exception)
+                }
+            }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -113,8 +209,8 @@ fun ARScreen(onBack: () -> Unit) {
                         y = ((-120) + (rotationX * 2)).dp
                     ),
                 title = "Verified Location",
-                subtitle = "Saveetha Campus",
-                distance = "12m"
+                subtitle = currentAddress.take(20) + "...",
+                distance = "0m"
             )
             ARDataTag(
                 modifier = Modifier
@@ -123,10 +219,29 @@ fun ARScreen(onBack: () -> Unit) {
                         x = (100 + (rotationY * 2)).dp, 
                         y = (40 + (rotationX * 2)).dp
                     ),
-                title = "GPS Node #42",
-                subtitle = "Accuracy: 2.1m",
-                distance = "45m"
+                title = "GPS Node",
+                subtitle = currentAccuracy,
+                distance = "Live"
             )
+        }
+
+        // Bottom Controls
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = 40.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                onClick = { takePhoto() },
+                modifier = Modifier.size(80.dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.3f),
+                border = androidx.compose.foundation.BorderStroke(4.dp, Color.White)
+            ) {
+                Box(modifier = Modifier.padding(8.dp).background(Color.White, CircleShape))
+            }
         }
 
         // Header

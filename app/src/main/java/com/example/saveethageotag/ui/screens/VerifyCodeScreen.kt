@@ -27,6 +27,7 @@ import com.example.saveethageotag.ui.theme.TextSecondary
 @Composable
 fun VerifyCodeScreen(
     viewModel: VerifyViewModel = viewModel(),
+    onBack: () -> Unit = {},
     onVerify: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
@@ -55,7 +56,7 @@ fun VerifyCodeScreen(
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Text(
