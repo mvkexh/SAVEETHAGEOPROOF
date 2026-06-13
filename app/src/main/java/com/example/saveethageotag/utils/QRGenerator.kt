@@ -5,13 +5,24 @@ import android.util.Log
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import android.graphics.Color as AndroidColor
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.Layout
+import android.text.SpannableStringBuilder
+import android.text.Spannable
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.StyleSpan
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 object QRGenerator {
     private const val TAG = "QRGenerator"
 
     /**
      * Embeds a QR Code and detailed verification info onto the image using Bitmap + Canvas.
-     * Mimics professional GPS camera layout.
+     * Matches the visual style provided in user screenshots.
      */
     fun embedVerificationToImage(
         originalBitmap: Bitmap, 
@@ -26,103 +37,118 @@ object QRGenerator {
             val width = resultBitmap.width
             val height = resultBitmap.height
             
-            // Scaled sizes based on image resolution
+            // Dynamic scaling based on image width
             val padding = width * 0.03f
-            val badgeHeight = height * 0.20f
-            val qrSize = badgeHeight * 0.8f
+            val baseBadgeHeight = height * 0.28f // Sufficient height for UUID and address
+            val qrSize = baseBadgeHeight * 0.7f
             
             // Generate QR Bitmap
             val qrBitmap = generateQRCode(qrContent, qrSize.toInt())
+            
+            val textPaint = TextPaint().apply {
+                isAntiAlias = true
+                color = AndroidColor.WHITE
+            }
+            
+            val address = metadata["address"]?.toString() ?: "Unknown Location"
+            val lat = String.format(Locale.US, "%.6f", (metadata["latitude"] as? Double) ?: 0.0)
+            val lon = String.format(Locale.US, "%.6f", (metadata["longitude"] as? Double) ?: 0.0)
+            val timestamp = metadata["timestamp"] as? Long ?: System.currentTimeMillis()
+            
+            // Format: Monday, 01/06/2026 01:27 am GMT+0530
+            val sdf = SimpleDateFormat("EEEE, dd/MM/yyyy hh:mm a 'GMT'Z", Locale.US)
+            val dateStr = sdf.format(Date(timestamp))
+            
+            // Available width for text
+            val textLeftOffsetFromRect = padding + qrSize + padding
+            val availableTextWidth = width - (padding * 2) - textLeftOffsetFromRect - padding
+            
+            val spannableText = SpannableStringBuilder().apply {
+                // GeoProof ID Header
+                val header = "GeoProof ID:\n"
+                append(header)
+                setSpan(StyleSpan(Typeface.BOLD), 0, header.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                setSpan(AbsoluteSizeSpan((baseBadgeHeight * 0.12f).toInt()), 0, header.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                
+                // UUID (Digital Signature)
+                val idStart = length
+                append(displayCode).append("\n\n")
+                setSpan(StyleSpan(Typeface.BOLD), idStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                setSpan(AbsoluteSizeSpan((baseBadgeHeight * 0.10f).toInt()), idStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                
+                // Address, Lat/Long, Timestamp
+                val detailsStart = length
+                append(address).append("\n")
+                append("Lat $lat, Long $lon").append("\n")
+                append(dateStr).append("\n")
+                append("Code: $displayCode")
+                
+                setSpan(StyleSpan(Typeface.NORMAL), detailsStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                setSpan(AbsoluteSizeSpan((baseBadgeHeight * 0.075f).toInt()), detailsStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+
+            val staticLayout = StaticLayout.Builder.obtain(spannableText, 0, spannableText.length, textPaint, availableTextWidth.toInt())
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setLineSpacing(0f, 1.1f)
+                .build()
+
+            val actualBadgeHeight = Math.max(baseBadgeHeight, staticLayout.height + padding * 2.5f)
             
             val paint = Paint().apply {
                 isAntiAlias = true
                 style = Paint.Style.FILL
             }
 
-            // 1. Draw a semi-transparent background banner at the bottom
+            // 1. Draw Semi-Transparent Black Banner
             paint.color = AndroidColor.BLACK
-            paint.alpha = 170
+            paint.alpha = 190 // Match screenshot transparency
             val rect = RectF(
                 padding,
-                height - badgeHeight - padding,
+                height - actualBadgeHeight - padding,
                 width - padding,
                 height - padding
             )
-            canvas.drawRoundRect(rect, 12f, 12f, paint)
+            canvas.drawRoundRect(rect, 10f, 10f, paint)
 
-            // 2. Draw QR Code on the FAR LEFT of the banner
-            var textLeftOffset = rect.left + padding
+            // 2. Draw QR Code
             if (qrBitmap != null) {
                 val qrRect = RectF(
                     rect.left + padding,
-                    rect.centerY() - qrSize / 2,
+                    rect.top + (actualBadgeHeight - qrSize) / 2,
                     rect.left + padding + qrSize,
-                    rect.centerY() + qrSize / 2
+                    rect.top + (actualBadgeHeight + qrSize) / 2
                 )
-                // Draw a white background for the QR code to make it scan-ready
                 paint.color = AndroidColor.WHITE
                 paint.alpha = 255
-                canvas.drawRoundRect(qrRect, 4f, 4f, paint)
+                canvas.drawRoundRect(qrRect, 5f, 5f, paint)
                 canvas.drawBitmap(qrBitmap, null, qrRect, null)
-                
-                textLeftOffset += qrSize + padding
             }
 
-            // 3. Draw Detailed Text
-            paint.color = AndroidColor.WHITE
+            // 3. Draw Text
+            canvas.save()
+            canvas.translate(rect.left + textLeftOffsetFromRect, rect.top + padding)
+            staticLayout.draw(canvas)
+            canvas.restore()
             
-            val address = metadata["address"]?.toString() ?: "Unknown Location"
-            val lat = metadata["latitude"]?.toString() ?: "0.0"
-            val lon = metadata["longitude"]?.toString() ?: "0.0"
-            val timestamp = metadata["timestamp"] as? Long ?: System.currentTimeMillis()
-            val dateStr = java.text.SimpleDateFormat("EEEE, dd/MM/yyyy hh:mm a 'GMT'Z", java.util.Locale.getDefault()).format(java.util.Date(timestamp))
-            
-            // Header Line (City/State or displayCode)
-            paint.textSize = badgeHeight * 0.16f
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            val headerText = if (address.contains(",")) address.split(",").take(2).joinToString(",") else "Saveetha Geotag Verified"
-            canvas.drawText(headerText, textLeftOffset, rect.top + padding + paint.textSize, paint)
-
-            // Address and GPS info
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-            paint.textSize = badgeHeight * 0.11f
-            
-            val lines = mutableListOf<String>()
-            // Split address if too long
-            if (address.length > 50) {
-                lines.add(address.take(50) + "...")
-            } else {
-                lines.add(address)
+            // 4. "GeoProof" small badge in corner
+            val badgePaint = Paint().apply {
+                isAntiAlias = true
+                color = AndroidColor.WHITE
+                alpha = 130
+                textSize = baseBadgeHeight * 0.06f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
-            lines.add("Lat $lat, Long $lon")
-            lines.add(dateStr)
-            lines.add("Status: AUTHENTIC | Code: $displayCode")
+            val badgeText = "GeoProof"
+            val badgeWidth = badgePaint.measureText(badgeText)
+            canvas.drawText(badgeText, rect.right - badgeWidth - padding, rect.top + padding * 1.5f, badgePaint)
 
-            var currentY = rect.top + padding + badgeHeight * 0.35f
-            lines.forEach { line ->
-                canvas.drawText(line, textLeftOffset, currentY, paint)
-                currentY += paint.textSize * 1.5f
-            }
-            
-            // 4. "GPS Map Camera" small badge in top right of banner
-            paint.textSize = badgeHeight * 0.08f
-            paint.color = AndroidColor.WHITE
-            paint.alpha = 150
-            val badgeText = "GPS Map Camera"
-            val badgeWidth = paint.measureText(badgeText)
-            canvas.drawText(badgeText, rect.right - badgeWidth - padding/2, rect.top + padding, paint)
-
-            Log.d(TAG, "Professional QR Watermarking success")
             resultBitmap
         } catch (e: Exception) {
-            Log.e(TAG, "QR Embedding failed", e)
+            Log.e(TAG, "Embedding failed", e)
             originalBitmap
         }
     }
 
-    /**
-     * Generates a QR code bitmap from the given content using ZXing.
-     */
     fun generateQRCode(content: String, size: Int = 512): Bitmap? {
         return try {
             val writer = QRCodeWriter()

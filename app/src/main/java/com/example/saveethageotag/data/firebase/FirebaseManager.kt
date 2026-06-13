@@ -10,6 +10,7 @@ import com.example.saveethageotag.utils.QRGenerator
 import com.example.saveethageotag.ui.viewmodels.CaptureHistoryItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -19,25 +20,18 @@ import java.util.UUID
 class FirebaseManager(private val context: Context) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
     private val TAG = "GeoProof_Firebase"
 
     /**
-     * Complete capture flow with LOCAL STORAGE implementation.
-     * Removes Firebase Storage to stay on Spark free plan.
+     * Complete capture flow with CLOUD STORAGE implementation.
+     * Uploads image to Firebase Storage so it can be viewed on other devices.
      */
     suspend fun uploadImage(imageUri: Uri, metadata: Map<String, Any>): Result<String> {
         return try {
-            // 1. Generate UNIQUE verification code - use a cleaner short ID if possible, or consistent UUID
+            // 1. Generate the verification code and metadata IMMEDIATELY (Local-First)
             val verificationCode = UUID.randomUUID().toString()
             val timestamp = System.currentTimeMillis()
-            Log.d(TAG, "Local Storage: Created verificationCode: $verificationCode")
-            
-            // 2. Load original bitmap
-            val inputStream = context.contentResolver.openInputStream(imageUri)
-            val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: throw Exception("Failed to load image from URI")
-            
-            // 3. Generate QR and Embed into Image with Metadata
-            Log.d(TAG, "Local Storage: Embedding QR and Metadata into image...")
             
             val captureMetadata = hashMapOf<String, Any>(
                 "latitude" to (metadata["latitude"] ?: 0.0),
@@ -45,6 +39,11 @@ class FirebaseManager(private val context: Context) {
                 "address" to (metadata["address"] ?: "Unknown"),
                 "timestamp" to timestamp
             )
+
+            // 2. Process Image with Watermark (QR + Metadata)
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val options = BitmapFactory.Options().apply { inSampleSize = 1 } // High quality
+            val originalBitmap = BitmapFactory.decodeStream(inputStream, null, options) ?: throw Exception("Failed to load image")
             
             val watermarkedBitmap = QRGenerator.embedVerificationToImage(
                 originalBitmap, 
@@ -53,13 +52,11 @@ class FirebaseManager(private val context: Context) {
                 captureMetadata
             )
             
-            // 4. Save Processed Image to LOCAL STORAGE
+            // 3. Save to Public Gallery and Internal Storage IMMEDIATELY
             val localFile = saveBitmapToLocalStorage(watermarkedBitmap, verificationCode)
             val localPath = localFile.absolutePath
-            Log.d(TAG, "Local Storage: Image saved locally at: $localPath")
             
-            // 5. Store metadata in Firestore collection "GeoProofs"
-            // Use the code as the document ID for instant lookup
+            // 4. Prepare data for Firestore
             val captureData = hashMapOf(
                 "id" to verificationCode,
                 "verificationCode" to verificationCode,
@@ -69,26 +66,41 @@ class FirebaseManager(private val context: Context) {
                 "address" to (metadata["address"] ?: "Unknown"),
                 "accuracy" to (metadata["accuracy"] ?: "N/A"),
                 "timestamp" to timestamp,
-                "userId" to (auth.currentUser?.uid ?: "anonymous"),
                 "device" to Build.MODEL,
                 "isAuthentic" to true
             )
-            
-            Log.d(TAG, "Firestore save: Saving to GeoProofs/$verificationCode")
+
+            // 5. Save to local history file immediately
+            saveMetadataToLocalHistory(captureData)
+
+            // 6. Attempt Firebase Upload in Background (Don't block the user if it fails)
             try {
+                if (auth.currentUser == null) {
+                    auth.signInAnonymously().await()
+                }
+                
+                val uid = auth.currentUser?.uid ?: "anonymous"
+                captureData["userId"] = uid
+
+                val storageRef = storage.reference.child("captures/$verificationCode.jpg")
+                val baos = ByteArrayOutputStream()
+                watermarkedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+                val imageData = baos.toByteArray()
+                
+                storageRef.putBytes(imageData).await()
+                val downloadUrl = storageRef.downloadUrl.await().toString()
+                captureData["imageUrl"] = downloadUrl
+                
                 firestore.collection("GeoProofs").document(verificationCode).set(captureData).await()
-                Log.d(TAG, "Firestore save: success")
+                Log.d(TAG, "Cloud sync successful")
             } catch (e: Exception) {
-                Log.e(TAG, "Firestore save failed: ${e.message}")
+                Log.e(TAG, "Cloud sync failed (Config error?), but image is saved locally: ${e.message}")
+                // We DON'T throw here so the user still gets their verification code and local image
             }
             
-            // 6. Save metadata to LOCAL HISTORY file
-            saveMetadataToLocalHistory(captureData)
-            
-            Log.d(TAG, "Flow complete: Verification success for $verificationCode")
             Result.success(verificationCode)
         } catch (e: Exception) {
-            Log.e(TAG, "local save failure: ${e.message}", e)
+            Log.e(TAG, "Flow failed: ${e.message}", e)
             Result.failure(e)
         }
     }

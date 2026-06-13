@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import android.widget.Toast
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,16 +32,44 @@ import com.example.saveethageotag.ui.viewmodels.SettingsViewModel
 @Composable
 fun SettingsScreen(
     onAboutClick: () -> Unit = {},
+    onHelpClick: () -> Unit = {},
+    onPrivacyClick: () -> Unit = {},
+    onTermsClick: () -> Unit = {},
     themeViewModel: ThemeViewModel = viewModel(),
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
     val isDarkMode by themeViewModel.isDarkMode
-    val biometricEnabled by settingsViewModel.biometricEnabled
-    val encryptionEnabled by settingsViewModel.encryptionEnabled
-    val notificationsEnabled by settingsViewModel.notificationsEnabled
-    val locationMetadataEnabled by settingsViewModel.locationMetadataEnabled
-    val timestampEnabled by settingsViewModel.timestampEnabled
+    val appVersion = settingsViewModel.appVersion
+    
+    val context = LocalContext.current
 
+    SettingsScreenContent(
+        isDarkMode = isDarkMode,
+        appVersion = appVersion,
+        onDarkModeToggle = { themeViewModel.setDarkMode(it) },
+        onClearCache = {
+            settingsViewModel.clearCache()
+            Toast.makeText(context, "Cache cleared successfully", Toast.LENGTH_SHORT).show()
+        },
+        onHelpClick = onHelpClick,
+        onPrivacyPolicyClick = onPrivacyClick,
+        onTermsOfServiceClick = onTermsClick,
+        onAboutClick = onAboutClick
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreenContent(
+    isDarkMode: Boolean,
+    appVersion: String,
+    onDarkModeToggle: (Boolean) -> Unit,
+    onClearCache: () -> Unit,
+    onHelpClick: () -> Unit,
+    onPrivacyPolicyClick: () -> Unit,
+    onTermsOfServiceClick: () -> Unit,
+    onAboutClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,7 +95,7 @@ fun SettingsScreen(
                 title = "Dark Mode",
                 subtitle = "Toggle between light and dark theme",
                 checked = isDarkMode,
-                onCheckedChange = { themeViewModel.setDarkMode(it) }
+                onCheckedChange = onDarkModeToggle
             )
             
             SettingsCategory("Data Management")
@@ -71,32 +103,32 @@ fun SettingsScreen(
                 icon = Icons.Default.DeleteSweep,
                 title = "Clear Cache",
                 subtitle = "Free up storage space",
-                onClick = { settingsViewModel.clearCache() }
+                onClick = onClearCache
             )
             
             SettingsCategory("Support & Help")
             SettingsClickItem(
-                icon = Icons.Default.Help,
+                icon = Icons.AutoMirrored.Filled.Help,
                 title = "Help Center",
                 subtitle = "Get support and troubleshooting",
-                onClick = { /* Navigate to help */ }
+                onClick = onHelpClick
             )
             SettingsClickItem(
                 icon = Icons.Default.PrivacyTip,
                 title = "Privacy Policy",
                 subtitle = "How we handle your data",
-                onClick = { /* Navigate to privacy */ }
+                onClick = onPrivacyPolicyClick
             )
             SettingsClickItem(
                 icon = Icons.Default.Gavel,
                 title = "Terms of Service",
                 subtitle = "Rules for using the app",
-                onClick = { /* Navigate to terms */ }
+                onClick = onTermsOfServiceClick
             )
             SettingsClickItem(
                 icon = Icons.Default.Info,
                 title = "About App",
-                subtitle = "Version: ${settingsViewModel.appVersion}",
+                subtitle = "Version: $appVersion",
                 onClick = onAboutClick
             )
             
@@ -104,7 +136,7 @@ fun SettingsScreen(
             
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Saveetha Geotag v${settingsViewModel.appVersion}",
+                    text = "Saveetha Geotag v$appVersion",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -202,6 +234,23 @@ fun SettingsClickItem(icon: ImageVector, title: String, subtitle: String, onClic
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    SaveethaGeotagTheme {
+        SettingsScreenContent(
+            isDarkMode = false,
+            appVersion = "1.0.0",
+            onDarkModeToggle = {},
+            onClearCache = {},
+            onHelpClick = {},
+            onPrivacyPolicyClick = {},
+            onTermsOfServiceClick = {},
+            onAboutClick = {}
         )
     }
 }

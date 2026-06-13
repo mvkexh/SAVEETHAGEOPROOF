@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Saveetha GeoTag — Comprehensive E2E Testing Suite">
+    
+    <listeners>
+        <listener class-name="com.saveethageotag.listeners.TestListener"/>
+    </listeners>
+    
+    <test name="E2E Framework Execution — Real &amp; Simulation Mode">
+        <classes>
+            <class name="com.saveethageotag.tests.FunctionalTests"/>
+            <class name="com.saveethageotag.tests.UiUxTests"/>
+            <class name="com.saveethageotag.tests.CompatibilityTests"/>
+            <class name="com.saveethageotag.tests.PerformanceTests"/>
+            <class name="com.saveethageotag.tests.SecurityTests"/>
+            <class name="com.saveethageotag.tests.ApiTests"/>
+            <class name="com.saveethageotag.tests.DatabaseTests"/>
+            <class name="com.saveethageotag.tests.AccessibilityTests"/>
+            <class name="com.saveethageotag.tests.MobileSpecificTests"/>
+            <class name="com.saveethageotag.tests.RegressionTests"/>
+            <class name="com.saveethageotag.tests.E2ETests"/>
+        </classes>
+    </test>
+</suite>

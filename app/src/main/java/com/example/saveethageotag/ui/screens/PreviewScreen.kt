@@ -83,7 +83,7 @@ fun PreviewScreen(captureViewModel: CaptureViewModel?, onConfirm: (String) -> Un
                 }
             }
 
-            // GPS Map Camera Badge
+            // GeoProof Badge
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -92,9 +92,9 @@ fun PreviewScreen(captureViewModel: CaptureViewModel?, onConfirm: (String) -> Un
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                Icon(Icons.Default.Security, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("GPS Map Camera", color = Color.White, fontSize = 10.sp)
+                Text("GeoProof", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
 
             // Bottom Location Overlay on Image
@@ -122,14 +122,29 @@ fun PreviewScreen(captureViewModel: CaptureViewModel?, onConfirm: (String) -> Un
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(state.address.split(",").firstOrNull() ?: "Unknown Location", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Box(modifier = Modifier.size(12.dp, 8.dp).background(Color.White))
-                        }
-                        Text(state.address, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1)
-                        Text("Lat ${String.format("%.6f", state.latitude)}, Long ${String.format("%.6f", state.longitude)}", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
-                        Text(timestamp, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+                        Text(
+                            "GeoProof Verified", 
+                            color = Color.White, 
+                            fontWeight = FontWeight.Bold, 
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            state.address, 
+                            color = Color.White.copy(alpha = 0.9f), 
+                            fontSize = 10.sp, 
+                            maxLines = 3,
+                            lineHeight = 12.sp
+                        )
+                        Text(
+                            "Lat ${String.format("%.6f", state.latitude)}, Long ${String.format("%.6f", state.longitude)}", 
+                            color = Color.White.copy(alpha = 0.7f), 
+                            fontSize = 10.sp
+                        )
+                        Text(
+                            timestamp, 
+                            color = Color.White.copy(alpha = 0.7f), 
+                            fontSize = 10.sp
+                        )
                     }
                 }
             }

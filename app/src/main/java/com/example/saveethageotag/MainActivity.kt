@@ -2,24 +2,30 @@ package com.example.saveethageotag
 
 import android.os.Bundle
 import android.util.Log
-import com.google.android.gms.maps.MapsInitializer
-import com.google.android.gms.maps.MapsInitializer.Renderer
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.padding
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -30,21 +36,23 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 import com.example.saveethageotag.ui.theme.LogoBlue
-import com.example.saveethageotag.ui.theme.LogoGold
-import com.example.saveethageotag.ui.theme.TextSecondary
 import com.example.saveethageotag.ui.viewmodels.ThemeViewModel
 import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
 import com.example.saveethageotag.ui.viewmodels.CapturesViewModel
 import com.example.saveethageotag.data.firebase.FirebaseManager
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.saveethageotag.ui.screens.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 sealed class Screen(val route: String, val icon: ImageVector, val label: String) {
     object Start : Screen("start", Icons.Default.RocketLaunch, "Start")
     object VerifyCode : Screen("verify_code", Icons.Default.Shield, "Verify")
     object Scan : Screen("scan", Icons.Default.QrCodeScanner, "Scan")
     object AR : Screen("ar", Icons.Default.ViewInAr, "AR")
-    object Map : Screen("map", Icons.Default.Map, "Map")
+    object Dashboard : Screen("dashboard", Icons.Default.Dashboard, "Stats")
     object Captures : Screen("captures", Icons.Default.History, "History")
     object About : Screen("about", Icons.Default.Info, "About")
     
@@ -59,17 +67,26 @@ sealed class Screen(val route: String, val icon: ImageVector, val label: String)
     }
     object TamperAnalysis : Screen("tamper_analysis", Icons.Default.BugReport, "Analysis")
     object Settings : Screen("settings", Icons.Default.Settings, "Settings")
+    
+    // Support screens
+    object HelpCenter : Screen("help_center", Icons.AutoMirrored.Filled.Help, "Help")
+    object PrivacyPolicy : Screen("privacy_policy", Icons.Default.PrivacyTip, "Privacy")
+    object TermsOfService : Screen("terms_of_service", Icons.Default.Gavel, "Terms")
 }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize Maps with the latest renderer to fix blank map issues
-        MapsInitializer.initialize(applicationContext, Renderer.LATEST) { renderer ->
-            when (renderer) {
-                Renderer.LATEST -> Log.d("MainActivity", "The latest version of renderer is used.")
-                Renderer.LEGACY -> Log.d("MainActivity", "The legacy version of renderer is used.")
+
+        // Backend health check (FastAPI connection test)
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val response = URL("http://10.0.2.2:8000/health").readText()
+                    Log.d("BACKEND_TEST", "FastAPI Connected: $response")
+                }
+            } catch (e: Exception) {
+                Log.e("BACKEND_TEST", "FastAPI Connection Failed: ${e.message}")
             }
         }
 
@@ -81,12 +98,9 @@ class MainActivity : ComponentActivity() {
             val isDarkMode by themeViewModel.isDarkMode
 
             val firebaseManager = remember { FirebaseManager(applicationContext) }
+
             LaunchedEffect(Unit) {
-                firebaseManager.signInAnonymously { success: Boolean ->
-                    if (success) {
-                        // Signed in
-                    }
-                }
+                firebaseManager.signInAnonymously { }
             }
             
             SaveethaGeotagTheme(darkTheme = isDarkMode) {
@@ -104,7 +118,7 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
     
     val bottomNavItems = listOf(
         Screen.Home,
-        Screen.Map,
+        Screen.Dashboard,
         Screen.VerifyCode,
         Screen.Scan,
         Screen.Captures,
@@ -119,8 +133,8 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
         bottomBar = {
             if (currentDestination?.route != Screen.Start.route) {
                 NavigationBar(
-                    containerColor = Color.White,
-                    contentColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 ) {
                     bottomNavItems.forEach { screen ->
                         val isSelected = currentDestination?.hierarchy?.any { 
@@ -156,7 +170,9 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
         NavHost(
             navController = navController,
             startDestination = Screen.Start.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn(animationSpec = tween(700)) },
+            exitTransition = { fadeOut(animationSpec = tween(700)) }
         ) {
             composable(Screen.Start.route) { 
                 StartScreen { 
@@ -212,21 +228,17 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
                     }
                 ) 
             }
-            composable("map") { MapScreen(viewModel = capturesViewModel) }
+            composable(Screen.Dashboard.route) { DashboardScreen(viewModel = capturesViewModel) }
             composable(Screen.Scan.route) { 
                 ScanScreen(
                     onScanSuccess = { content ->
-                        // Handle raw scan content which might be the full metadata string or just an ID/Code
-                        if (content.contains("ID:")) {
-                            val id = content.substringAfter("ID:").substringBefore("|")
-                            navController.navigate(Screen.Details.createRoute(id))
-                        } else if (content.startsWith("GP-")) {
-                            // If it's a verification code, we need to resolve it (same as VerifyCodeScreen)
-                            // For simplicity in the UI flow, we navigate to VerifyCode with this value
-                            navController.navigate(Screen.VerifyCode.route)
-                        } else {
-                            navController.navigate(Screen.Details.createRoute(content))
+                        // Clean the scanned content
+                        val id = when {
+                            content.contains("ID:") -> content.substringAfter("ID:").substringBefore("|").trim()
+                            content.startsWith("GP-") -> content.substringAfter("GP-").trim()
+                            else -> content.trim()
                         }
+                        navController.navigate(Screen.Details.createRoute(id))
                     }
                 ) 
             }
@@ -236,12 +248,18 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
             ) }
             composable(Screen.About.route) { AboutScreen() }
             composable(Screen.TamperAnalysis.route) { TamperAnalysisScreen() }
-            composable(Screen.Settings.route) { 
+            composable(Screen.Settings.route) {
                 SettingsScreen(
                     onAboutClick = { navController.navigate(Screen.About.route) },
+                    onHelpClick = { navController.navigate(Screen.HelpCenter.route) },
+                    onPrivacyClick = { navController.navigate(Screen.PrivacyPolicy.route) },
+                    onTermsClick = { navController.navigate(Screen.TermsOfService.route) },
                     themeViewModel = themeViewModel
                 )
             }
+            composable(Screen.HelpCenter.route) { HelpCenterScreen(onBack = { navController.popBackStack() }) }
+            composable(Screen.PrivacyPolicy.route) { PrivacyPolicyScreen(onBack = { navController.popBackStack() }) }
+            composable(Screen.TermsOfService.route) { TermsOfServiceScreen(onBack = { navController.popBackStack() }) }
         }
     }
 }

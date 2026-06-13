@@ -15,6 +15,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -124,8 +125,10 @@ fun CameraContent(
         if (isPreview || fusedLocationClient == null) return@LaunchedEffect
         
         val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 5000
-        ).build()
+            Priority.PRIORITY_HIGH_ACCURACY, 1000
+        ).setMinUpdateDistanceMeters(0f)
+            .setWaitForAccurateLocation(true)
+            .build()
 
         val locationCallback = object : com.google.android.gms.location.LocationCallback() {
             override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
@@ -138,18 +141,38 @@ fun CameraContent(
                         if (android.os.Build.VERSION.SDK_INT >= 33) {
                             geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
                                 if (addresses.isNotEmpty()) {
-                                    currentAddress = addresses[0].getAddressLine(0)
+                                    val addr = addresses[0]
+                                    currentAddress = addr.getAddressLine(0) ?: ""
+                                    
+                                    if (currentAddress.length < 10) {
+                                        val subThoroughfare = addr.subThoroughfare ?: ""
+                                        val thoroughfare = addr.thoroughfare ?: ""
+                                        val locality = addr.locality ?: ""
+                                        currentAddress = listOf(subThoroughfare, thoroughfare, locality)
+                                            .filter { it.isNotEmpty() }
+                                            .joinToString(", ")
+                                    }
                                 }
                             }
                         } else {
                             @Suppress("DEPRECATION")
                             val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                             if (!addresses.isNullOrEmpty()) {
-                                currentAddress = addresses[0].getAddressLine(0)
+                                val addr = addresses[0]
+                                currentAddress = addr.getAddressLine(0) ?: ""
+                                
+                                if (currentAddress.length < 10) {
+                                    val subThoroughfare = addr.subThoroughfare ?: ""
+                                    val thoroughfare = addr.thoroughfare ?: ""
+                                    val locality = addr.locality ?: ""
+                                    currentAddress = listOf(subThoroughfare, thoroughfare, locality)
+                                        .filter { it.isNotEmpty() }
+                                        .joinToString(", ")
+                                }
                             }
                         }
                     } catch (e: Exception) {
-                        currentAddress = "Lat: ${String.format("%.4f", location.latitude)}, Lon: ${String.format("%.4f", location.longitude)}"
+                        currentAddress = "Lat: ${String.format("%.6f", location.latitude)}, Lon: ${String.format("%.6f", location.longitude)}"
                     }
                 }
             }
@@ -293,49 +316,87 @@ fun CameraContent(
             }
         }
 
-        // Header
-        Row(
+        // Header (Top Panel from Image 3)
+        Card(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(16.dp)
+                .padding(top = 48.dp), // Space for status bar area
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5).copy(alpha = 0.9f)), // Light Purple/Lavender
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = currentAddress, 
+                        color = Color.Black, 
+                        fontSize = 14.sp, 
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Accuracy: ${currentAccuracy.replace("Accuracy: ", "")}", 
+                        color = Color.Gray, 
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+
+        // Top Controls (Flash, Flip) - Floating with backgrounds for visibility
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(top = 8.dp, start = 8.dp, end = 8.dp)
         ) {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onPrimary)
-            }
-            Text("Capture Photo", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            
-            Row {
-                IconButton(onClick = {
+            IconButton(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .background(Color.Black.copy(alpha = 0.3f), CircleShape),
+                onClick = {
                     lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
                         CameraSelector.LENS_FACING_FRONT
                     } else {
                         CameraSelector.LENS_FACING_BACK
                     }
-                }) {
-                    Icon(Icons.Default.FlipCameraAndroid, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 }
-                
-                IconButton(onClick = {
+            ) {
+                Icon(Icons.Default.FlipCameraAndroid, contentDescription = null, tint = Color.White)
+            }
+            
+            IconButton(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(Color.Black.copy(alpha = 0.3f), CircleShape),
+                onClick = {
                     flashMode = when (flashMode) {
                         ImageCapture.FLASH_MODE_OFF -> ImageCapture.FLASH_MODE_ON
                         ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_AUTO
                         else -> ImageCapture.FLASH_MODE_OFF
                     }
-                }) {
-                    Icon(
-                        imageVector = when (flashMode) {
-                            ImageCapture.FLASH_MODE_ON -> Icons.Default.FlashOn
-                            ImageCapture.FLASH_MODE_AUTO -> Icons.Default.FlashAuto
-                            else -> Icons.Default.FlashOff
-                        },
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
                 }
+            ) {
+                Icon(
+                    imageVector = when (flashMode) {
+                        ImageCapture.FLASH_MODE_ON -> Icons.Default.FlashOn
+                        ImageCapture.FLASH_MODE_AUTO -> Icons.Default.FlashAuto
+                        else -> Icons.Default.FlashOff
+                    },
+                    contentDescription = null,
+                    tint = Color.White
+                )
             }
         }
 
@@ -347,61 +408,46 @@ fun CameraContent(
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(bottom = 16.dp)
         ) {
-            // Location Box
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    androidx.compose.foundation.Image(
-                        painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(currentAddress, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                        Text(currentAccuracy, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
-                    }
-                }
-            }
-
             // Controls
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 8.dp),
+                    .padding(horizontal = 32.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(onClick = onGalleryClick) {
-                        Icon(Icons.Default.History, contentDescription = "History", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
+                        Icon(Icons.Default.History, contentDescription = "History", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(32.dp))
                     }
-                    Text("History", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("History", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
                 }
 
                 Surface(
-                    onClick = { takePhoto() },
-                    modifier = Modifier.size(72.dp),
+                    onClick = { 
+                        if (lastLocation != null) {
+                            takePhoto() 
+                        } else {
+                            android.widget.Toast.makeText(context, "Waiting for GPS...", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.size(80.dp),
                     shape = CircleShape,
                     color = Color.Transparent,
-                    border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.onSurface)
+                    border = androidx.compose.foundation.BorderStroke(5.dp, if (lastLocation != null) MaterialTheme.colorScheme.onSurface else Color.LightGray)
                 ) {
-                    Box(modifier = Modifier.padding(6.dp).background(MaterialTheme.colorScheme.onSurface, CircleShape))
+                    Box(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .background(if (lastLocation != null) MaterialTheme.colorScheme.onSurface else Color.LightGray, CircleShape)
+                    )
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(onClick = onARClick) {
-                        Icon(Icons.Default.ViewInAr, contentDescription = "AR View", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(28.dp))
+                        Icon(Icons.Default.ViewInAr, contentDescription = "AR View", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(32.dp))
                     }
-                    Text("AR View", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("AR View", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
                 }
             }
         }

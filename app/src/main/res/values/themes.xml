@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.SaveethaGeotag" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Background color of the splash screen -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <!-- Icon that will be displayed in the center -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/saveetha_logo</item>
+        <!-- Background color of the icon itself (if needed) -->
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/white</item>
+        <!-- Theme to use after the splash screen finishes -->
+        <item name="postSplashScreenTheme">@style/Theme.SaveethaGeotag</item>
+    </style>
 </resources>

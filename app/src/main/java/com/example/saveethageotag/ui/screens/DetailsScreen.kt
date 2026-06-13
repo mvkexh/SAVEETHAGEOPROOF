@@ -2,16 +2,17 @@ package com.example.saveethageotag.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,16 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 
 import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 
 import com.example.saveethageotag.ui.viewmodels.DetailsViewModel
+import com.example.saveethageotag.ui.viewmodels.DetailsState
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import android.util.Log
+import android.content.Context
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,6 +46,7 @@ fun DetailsScreen(
 ) {
     val state = viewModel.uiState.value
     val context = androidx.compose.ui.platform.LocalContext.current
+    var showFullscreenImage by remember { mutableStateOf(false) }
     
     LaunchedEffect(verificationId) {
         viewModel.fetchDetails(verificationId)
@@ -54,6 +58,10 @@ fun DetailsScreen(
         "Fetching..."
     } else {
         "N/A"
+    }
+
+    if (showFullscreenImage) {
+        FullscreenImageDialog(state) { showFullscreenImage = false }
     }
 
     Column(
@@ -82,8 +90,8 @@ fun DetailsScreen(
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center
             )
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+            IconButton(onClick = { shareReport(context, state, dateString) }) {
+                Icon(Icons.Default.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onPrimary)
             }
         }
 
@@ -92,11 +100,26 @@ fun DetailsScreen(
                 CircularProgressIndicator()
             }
         } else if (state.errorMessage != null) {
-            Text(
-                text = state.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(16.dp)
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(64.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = state.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { viewModel.fetchDetails(verificationId) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Retry Verification Search")
+                }
+            }
         } else {
             // Location Info Card (Matching image overlay style)
             Card(
@@ -107,25 +130,28 @@ fun DetailsScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(modifier = Modifier.padding(12.dp)) {
-                    // Actual Image Preview
+                    // Actual Image Preview - CLICKABLE
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                            .size(100.dp)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                            .clickable { showFullscreenImage = true },
                         contentAlignment = Alignment.Center
                     ) {
                         val imageSource = remember(state.localImagePath, state.imageUrl) {
-                            if (!state.localImagePath.isNullOrEmpty()) {
+                            if (!state.imageUrl.isNullOrEmpty()) {
+                                state.imageUrl
+                            } else if (!state.localImagePath.isNullOrEmpty() && java.io.File(state.localImagePath).exists()) {
                                 java.io.File(state.localImagePath)
                             } else {
-                                state.imageUrl as Any?
+                                null
                             }
                         }
                         
                         if (imageSource != null) {
                             AsyncImage(
                                 model = imageSource,
-                                contentDescription = null,
+                                contentDescription = "Captured Photo",
                                 contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
                                 onError = {
@@ -136,15 +162,23 @@ fun DetailsScreen(
                             androidx.compose.foundation.Image(
                                 painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
                                 contentDescription = null,
-                                modifier = Modifier.size(50.dp).padding(4.dp)
+                                modifier = Modifier.size(60.dp).padding(4.dp)
                             )
                         }
+                        
+                        // Add magnifying glass icon
+                        Icon(
+                            Icons.Default.ZoomIn, 
+                            contentDescription = null, 
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp).size(20.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(state.address.split(",").firstOrNull() ?: "Location", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(state.address.ifEmpty { "Loading address..." }, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                        Text(state.address.ifEmpty { "Loading address..." }, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 3)
                         Text("Lat ${state.latitude}, Long ${state.longitude}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         Text(dateString, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     }
@@ -227,34 +261,7 @@ fun DetailsScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = {
-                // Implementation of Share/Download Report
-                // For now, it shows the system share sheet with details
-                val shareIntent = android.content.Intent().apply {
-                    action = android.content.Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Verification Report: ${state.verificationCode}")
-                    putExtra(android.content.Intent.EXTRA_TEXT, """
-                        📸 GEO-PROOF VERIFICATION REPORT
-                        -------------------------------
-                        Status: ✅ AUTHENTIC
-                        Code: ${state.verificationCode}
-                        Captured on: $dateString
-                        
-                        LOCATION DETAILS
-                        Address: ${state.address}
-                        Coordinates: ${state.latitude}, ${state.longitude}
-                        Accuracy: ${state.accuracy}
-                        
-                        DEVICE INFO
-                        Model: ${android.os.Build.MODEL}
-                        
-                        Verified by Saveetha Geotag Security
-                        -------------------------------
-                    """.trimIndent())
-                }
-                context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Report"))
-            },
+            onClick = { generatePdfReport(context, state, dateString) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -262,8 +269,180 @@ fun DetailsScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Share / Download Report", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Icon(Icons.Default.PictureAsPdf, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download PDF Report", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
+    }
+}
+
+@Composable
+fun FullscreenImageDialog(state: DetailsState, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            val imageSource = remember(state.localImagePath, state.imageUrl) {
+                if (!state.imageUrl.isNullOrEmpty()) {
+                    state.imageUrl
+                } else if (!state.localImagePath.isNullOrEmpty() && java.io.File(state.localImagePath).exists()) {
+                    java.io.File(state.localImagePath)
+                } else {
+                    null
+                }
+            }
+
+            AsyncImage(
+                model = imageSource,
+                contentDescription = "Full Screen View",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+            )
+            
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+            }
+        }
+    }
+}
+
+fun shareReport(context: Context, state: DetailsState, dateString: String) {
+    val shareIntent = android.content.Intent().apply {
+        action = android.content.Intent.ACTION_SEND
+        type = "text/plain"
+        putExtra(android.content.Intent.EXTRA_SUBJECT, "Verification Report: ${state.verificationCode}")
+        putExtra(android.content.Intent.EXTRA_TEXT, """
+            📸 GEO-PROOF VERIFICATION REPORT
+            -------------------------------
+            Status: ✅ AUTHENTIC
+            Code: ${state.verificationCode}
+            Captured on: $dateString
+            
+            LOCATION DETAILS
+            Address: ${state.address}
+            Coordinates: ${state.latitude}, ${state.longitude}
+            Accuracy: ${state.accuracy}
+            
+            DEVICE INFO
+            Model: ${android.os.Build.MODEL}
+            
+            Verified by Saveetha Geotag Security
+            -------------------------------
+        """.trimIndent())
+    }
+    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Report"))
+}
+
+fun generatePdfReport(context: Context, state: DetailsState, dateString: String) {
+    try {
+        val pdfDocument = android.graphics.pdf.PdfDocument()
+        val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+        val paint = android.graphics.Paint()
+        val textPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 14f
+            isAntiAlias = true
+        }
+
+        // Title
+        paint.color = android.graphics.Color.BLACK
+        paint.textSize = 24f
+        paint.isFakeBoldText = true
+        canvas.drawText("GEO-PROOF SECURITY REPORT", 50f, 60f, paint)
+
+        // Metadata Header
+        paint.textSize = 16f
+        paint.color = android.graphics.Color.DKGRAY
+        canvas.drawText("Verification Details", 50f, 100f, paint)
+
+        // Content
+        var y = 140f
+        val lineGap = 30f
+        
+        fun drawRow(label: String, value: String) {
+            textPaint.isFakeBoldText = true
+            canvas.drawText("$label:", 50f, y, textPaint)
+            textPaint.isFakeBoldText = false
+            canvas.drawText(value, 200f, y, textPaint)
+            y += lineGap
+        }
+
+        drawRow("Status", "✅ AUTHENTIC")
+        drawRow("Code", state.verificationCode ?: "N/A")
+        drawRow("Date", dateString)
+        drawRow("Coordinates", "${state.latitude}, ${state.longitude}")
+        drawRow("Accuracy", state.accuracy)
+        drawRow("Device", android.os.Build.MODEL)
+        
+        y += 20f
+        textPaint.isFakeBoldText = true
+        canvas.drawText("Full Address:", 50f, y, textPaint)
+        textPaint.isFakeBoldText = false
+        y += 20f
+        
+        // Multi-line address wrapping
+        val words = state.address.split(" ")
+        var line = ""
+        for (word in words) {
+            if (textPaint.measureText("$line $word") < 450f) {
+                line = if (line.isEmpty()) word else "$line $word"
+            } else {
+                canvas.drawText(line, 50f, y, textPaint)
+                y += 20f
+                line = word
+            }
+        }
+        canvas.drawText(line, 50f, y, textPaint)
+
+        y += 50f
+        paint.textSize = 12f
+        paint.color = android.graphics.Color.GRAY
+        canvas.drawText("This report serves as a digital proof of location and time authenticity.", 50f, y, paint)
+        y += 20f
+        canvas.drawText("Generated by Saveetha Geotag App.", 50f, y, paint)
+
+        pdfDocument.finishPage(page)
+
+        // Save to Downloads using MediaStore for modern Android compatibility
+        val fileName = "GeoProof_${state.verificationCode?.take(8)}.pdf"
+        val contentValues = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+        }
+
+        val resolver = context.contentResolver
+        val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        } else {
+            // Fallback for older versions would go here
+            resolver.insert(android.provider.MediaStore.Files.getContentUri("external"), contentValues)
+        }
+
+        uri?.let {
+            resolver.openOutputStream(it)?.use { outputStream ->
+                pdfDocument.writeTo(outputStream)
+            }
+            android.widget.Toast.makeText(context, "Report saved to Downloads Folder", android.widget.Toast.LENGTH_LONG).show()
+        }
+        
+        pdfDocument.close()
+    } catch (e: Exception) {
+        Log.e("DetailsScreen", "Failed to generate PDF", e)
+        android.widget.Toast.makeText(context, "Failed to download PDF: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
