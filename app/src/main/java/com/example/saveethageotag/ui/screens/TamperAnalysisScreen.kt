@@ -23,76 +23,67 @@ import androidx.compose.ui.text.style.TextAlign
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 
 @Composable
-fun TamperAnalysisScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Header
-        Row(
+fun TamperAnalysisScreen(onBack: () -> Unit = {}) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .statusBarsPadding()
+            ) {
+                Text("Tampering Check", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TamperCheckItem("Image Metadata", "No issues found")
+                TamperCheckItem("Pixel Analysis", "No manipulation detected")
+                TamperCheckItem("Noise Analysis", "Consistent with original")
+                TamperCheckItem("Edge Analysis", "No abnormal edits")
+                TamperCheckItem("GPS Consistency", "Location is valid")
             }
-            Text(
-                "AI Analysis Report", 
-                color = MaterialTheme.colorScheme.onPrimary, 
-                fontSize = 18.sp, 
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.width(48.dp))
-        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text("Tampering Check", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            TamperCheckItem("Image Metadata", "No issues found")
-            TamperCheckItem("Pixel Analysis", "No manipulation detected")
-            TamperCheckItem("Noise Analysis", "Consistent with original")
-            TamperCheckItem("Edge Analysis", "No abnormal edits")
-            TamperCheckItem("GPS Consistency", "Location is valid")
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Confidence Score Section
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                .padding(16.dp)
-        ) {
-            Text("Confidence Score", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Mock Circular Chart
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .border(8.dp, MaterialTheme.colorScheme.tertiary, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("98.7%", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            // Confidence Score Section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Text("Confidence Score", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Mock Circular Chart
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .border(8.dp, MaterialTheme.colorScheme.tertiary, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("98.7%", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.width(24.dp))
+                    Text("Authentic", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                 }
-                Spacer(modifier = Modifier.width(24.dp))
-                Text("Authentic", color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold, fontSize = 24.sp)
             }
+        }
+
+        // Floating Back Button
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.1f), CircleShape)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
     }
 }

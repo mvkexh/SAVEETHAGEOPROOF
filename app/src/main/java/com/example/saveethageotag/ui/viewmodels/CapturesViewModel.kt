@@ -1,32 +1,34 @@
 package com.example.saveethageotag.ui.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import java.io.File
+import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.io.File
+import com.google.firebase.database.FirebaseDatabase
 
 data class CaptureHistoryItem(
     val id: String = "",
-    val localImagePath: String = "", // Updated to match local storage implementation
-    val imageUrl: String = "", // Kept for backward compatibility
+    val localImagePath: String = "",
+    val imageUrl: String = "",
     val address: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val timestamp: Long = 0,
     val accuracy: String = "",
-    val verificationCode: String = ""
+    val verificationCode: String = "",
+    val isSynced: Boolean = false
 )
 
 class CapturesViewModel(application: Application) : AndroidViewModel(application) {
-    private val firestore = FirebaseFirestore.getInstance()
+    private val DB_URL = "https://saveetha-geoproof-default-rtdb.asia-southeast1.firebasedatabase.app"
     private val TAG = "CapturesViewModel"
-    private val context = application.applicationContext
     
     private val _captures = mutableStateOf<List<CaptureHistoryItem>>(emptyList())
     val captures: State<List<CaptureHistoryItem>> = _captures
@@ -40,48 +42,60 @@ class CapturesViewModel(application: Application) : AndroidViewModel(application
 
     fun fetchCaptures() {
         _isLoading.value = true
-        Log.d(TAG, "Fetching history from Firestore and Local Storage...")
-        
-        // 1. Load Local History first for immediate UI update
-        val localItems = loadLocalHistory()
-        _captures.value = localItems
-        
-        // 2. Then listen to Firestore for cloud sync
-        firestore.collection("GeoProofs")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                _isLoading.value = false
-                if (error != null) {
-                    Log.e(TAG, "Error fetching history from Firestore", error)
-                    // If Firestore fails (e.g. Permission Denied), we still have local items
-                    return@addSnapshotListener
-                }
-                
-                val cloudItems = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(CaptureHistoryItem::class.java)?.copy(id = doc.id)
-                } ?: emptyList()
-                
-                // Merge cloud and local items, avoiding duplicates (prefer cloud for sync'd data)
-                val mergedList = (cloudItems + localItems).distinctBy { 
-                    it.verificationCode.ifEmpty { it.id }.lowercase()
-                }.sortedByDescending { it.timestamp }
-                
-                Log.d(TAG, "History loaded: ${mergedList.size} items (${cloudItems.size} cloud, ${localItems.size} local)")
-                _captures.value = mergedList
-            }
-    }
-
-    private fun loadLocalHistory(): List<CaptureHistoryItem> {
-        return try {
-            val historyFile = File(context.filesDir, "local_history.json")
-            if (!historyFile.exists()) return emptyList()
+        viewModelScope.launch {
+            val combinedList = mutableListOf<CaptureHistoryItem>()
             
-            val gson = Gson()
-            val type = object : TypeToken<List<CaptureHistoryItem>>() {}.type
-            gson.fromJson<List<CaptureHistoryItem>>(historyFile.readText(), type)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load local history", e)
-            emptyList()
+            // 1. PRIMARY: Fetch from Realtime Database (Global History)
+            try {
+                Log.d(TAG, "Fetching global history from Realtime Database...")
+                val db = FirebaseDatabase.getInstance(DB_URL)
+                // We order by timestamp and get the latest 50
+                val snapshot = db.getReference("verifications")
+                    .orderByChild("timestamp")
+                    .limitToLast(50)
+                    .get()
+                    .await()
+                
+                snapshot.children.reversed().forEach { doc ->
+                    val verificationId = doc.child("verificationId").value?.toString() ?: doc.key ?: ""
+                    combinedList.add(CaptureHistoryItem(
+                        id = verificationId,
+                        address = doc.child("address").value?.toString() ?: "",
+                        verificationCode = verificationId,
+                        imageUrl = "", // Image handled via Base64 in Details view to save bandwidth in list
+                        latitude = doc.child("latitude").value?.toString()?.toDoubleOrNull() ?: 0.0,
+                        longitude = doc.child("longitude").value?.toString()?.toDoubleOrNull() ?: 0.0,
+                        timestamp = doc.child("timestamp").value?.toString()?.toLongOrNull() ?: 0L,
+                        accuracy = doc.child("accuracy").value?.toString() ?: "N/A",
+                        isSynced = true
+                    ))
+                }
+                Log.i(TAG, "Global history fetched: ${combinedList.size} items")
+            } catch (e: Exception) {
+                Log.e(TAG, "Realtime Database history sync FAILED", e)
+            }
+
+            // 2. SECONDARY: Load LOCAL history (Offline cache)
+            try {
+                val historyFile = File(getApplication<Application>().filesDir, "local_history.json")
+                if (historyFile.exists()) {
+                    val json = historyFile.readText()
+                    val type = object : TypeToken<List<CaptureHistoryItem>>() {}.type
+                    val localItems: List<CaptureHistoryItem> = Gson().fromJson(json, type)
+                    
+                    localItems.forEach { local ->
+                        if (combinedList.none { it.id == local.id }) {
+                            combinedList.add(local)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Local history load error", e)
+            }
+
+            // Sort by timestamp descending
+            _captures.value = combinedList.sortedByDescending { it.timestamp }
+            _isLoading.value = false
         }
     }
 }

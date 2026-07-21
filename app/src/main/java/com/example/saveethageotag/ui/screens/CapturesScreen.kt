@@ -50,26 +50,17 @@ fun CapturesScreen(
     val captures by viewModel.captures
     val isLoading by viewModel.isLoading
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.fetchCaptures()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .padding(16.dp)
     ) {
-        Text(
-            "VERIFIED CAPTURES",
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            "Historical logs stored on device",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
         if (isLoading && captures.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -199,6 +190,12 @@ fun CaptureCard(capture: CaptureHistoryItem, onClick: (String) -> Unit, onShareC
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    if (capture.isSynced) {
+                        Icon(Icons.Default.CloudDone, contentDescription = "Synced to Cloud", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                    } else {
+                        Icon(Icons.Default.Sync, contentDescription = "Local Only", tint = Color.Gray, modifier = Modifier.size(14.dp))
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     Icon(Icons.Default.Verified, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(14.dp))
                 }
                 Text(date, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)

@@ -2,6 +2,7 @@ package com.example.saveethageotag.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,169 +31,159 @@ fun PreviewScreen(captureViewModel: CaptureViewModel?, onConfirm: (String) -> Un
     
     val timestamp = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date())
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { /* Handle back */ }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-            }
-            Text(
-                "Preview & Confirm", 
-                color = MaterialTheme.colorScheme.onPrimary, 
-                fontSize = 18.sp, 
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.width(48.dp))
-        }
-
-        // Image Preview with Overlays
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(16.dp)
-                .background(Color.Gray.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-        ) {
-            // Actual Captured Image
-            if (state.imageFile != null) {
-                AsyncImage(
-                    model = state.imageFile,
-                    contentDescription = "Captured Image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Business, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(100.dp))
-                }
-            }
-
-            // GeoProof Badge
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .background(Color.Black.copy(0.6f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Security, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("GeoProof", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            }
-
-            // Bottom Location Overlay on Image
-            Card(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(12.dp)
-                    .fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.7f)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(modifier = Modifier.padding(8.dp)) {
-                    // Small Logo Overlay
-                    Box(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .background(Color.White, RoundedCornerShape(4.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize().padding(4.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            "GeoProof Verified", 
-                            color = Color.White, 
-                            fontWeight = FontWeight.Bold, 
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            state.address, 
-                            color = Color.White.copy(alpha = 0.9f), 
-                            fontSize = 10.sp, 
-                            maxLines = 3,
-                            lineHeight = 12.sp
-                        )
-                        Text(
-                            "Lat ${String.format("%.6f", state.latitude)}, Long ${String.format("%.6f", state.longitude)}", 
-                            color = Color.White.copy(alpha = 0.7f), 
-                            fontSize = 10.sp
-                        )
-                        Text(
-                            timestamp, 
-                            color = Color.White.copy(alpha = 0.7f), 
-                            fontSize = 10.sp
-                        )
-                    }
-                }
-            }
-        }
-
-        // Details Panel
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
         ) {
-            DetailRow(Icons.Default.Schedule, "Date & Time", timestamp)
-            HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))
-            DetailRow(Icons.Default.GpsFixed, "Accuracy", state.accuracy)
-            HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))
-            DetailRow(Icons.Default.Smartphone, "Device", android.os.Build.MODEL)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            if (state.isUploading) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Generating Secure Verification ID...", color = MaterialTheme.colorScheme.primary)
+            // Image Preview with Overlays - Absolute Top
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color.Black)
+            ) {
+                // Actual Captured Image
+                if (state.imageFile != null) {
+                    AsyncImage(
+                        model = state.imageFile,
+                        contentDescription = "Captured Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Business, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(100.dp))
+                    }
                 }
-            } else {
-                Button(
-                    onClick = {
-                        captureViewModel?.uploadCapture { id ->
-                            onConfirm(id)
-                        }
-                    },
+
+                // Branding Badge (Aligned with Status Bar)
+                Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        .align(Alignment.TopEnd)
+                        .statusBarsPadding()
+                        .padding(12.dp)
+                        .background(Color.Black.copy(0.6f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Security, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Verified", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+
+                // Bottom Location Overlay on Image
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.7f)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Confirm & Generate QR", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Row(modifier = Modifier.padding(8.dp)) {
+                        // Small Logo Overlay
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .background(Color.White, RoundedCornerShape(4.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().padding(4.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                "Security Verified",
+                                color = Color.White, 
+                                fontWeight = FontWeight.Bold, 
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                state.address, 
+                                color = Color.White.copy(alpha = 0.9f), 
+                                fontSize = 10.sp, 
+                                maxLines = 3,
+                                lineHeight = 12.sp
+                            )
+                            Text(
+                                "Lat ${String.format("%.6f", state.latitude)}, Long ${String.format("%.6f", state.longitude)}", 
+                                color = Color.White.copy(alpha = 0.7f), 
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                timestamp, 
+                                color = Color.White.copy(alpha = 0.7f), 
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
             }
-            
-            state.errorMessage?.let { error ->
-                Text(error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+
+            // Details Panel
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                DetailRow(Icons.Default.Schedule, "Date & Time", timestamp)
+                HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))
+                DetailRow(Icons.Default.GpsFixed, "Accuracy", state.accuracy)
+                HorizontalDivider(color = Color.Gray.copy(alpha = 0.1f))
+                DetailRow(Icons.Default.Smartphone, "Device", android.os.Build.MODEL)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (state.isUploading) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Generating Secure Verification ID...", color = MaterialTheme.colorScheme.primary)
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            captureViewModel?.uploadCapture { id ->
+                                onConfirm(id)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Confirm & Generate QR", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                }
+                
+                state.errorMessage?.let { error ->
+                    Text(error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+                }
             }
+        }
+        
+        // Floating Back Button
+        IconButton(
+            onClick = { /* Handle back */ },
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.2f), CircleShape)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
         }
     }
 }

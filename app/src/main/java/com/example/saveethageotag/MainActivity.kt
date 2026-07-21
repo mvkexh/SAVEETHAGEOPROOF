@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -34,18 +33,22 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 import com.example.saveethageotag.ui.theme.LogoBlue
 import com.example.saveethageotag.ui.viewmodels.ThemeViewModel
 import com.example.saveethageotag.ui.viewmodels.CaptureViewModel
 import com.example.saveethageotag.ui.viewmodels.CapturesViewModel
-import com.example.saveethageotag.data.firebase.FirebaseManager
+import com.example.saveethageotag.data.api.RetrofitClient
 import com.example.saveethageotag.ui.screens.*
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.URL
+import kotlinx.coroutines.tasks.await
 
 sealed class Screen(val route: String, val icon: ImageVector, val label: String) {
     object Start : Screen("start", Icons.Default.RocketLaunch, "Start")
@@ -76,19 +79,10 @@ sealed class Screen(val route: String, val icon: ImageVector, val label: String)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        // Backend health check (FastAPI connection test)
-        lifecycleScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    val response = URL("http://10.0.2.2:8000/health").readText()
-                    Log.d("BACKEND_TEST", "FastAPI Connected: $response")
-                }
-            } catch (e: Exception) {
-                Log.e("BACKEND_TEST", "FastAPI Connection Failed: ${e.message}")
-            }
-        }
+        checkFirebaseHealth()
 
         enableEdgeToEdge()
         setContent {
@@ -97,15 +91,60 @@ class MainActivity : ComponentActivity() {
             val capturesViewModel: CapturesViewModel = viewModel()
             val isDarkMode by themeViewModel.isDarkMode
 
-            val firebaseManager = remember { FirebaseManager(applicationContext) }
+            var isBackendReady by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
-                firebaseManager.signInAnonymously { }
+                delay(1000) 
+                isBackendReady = true
             }
             
             SaveethaGeotagTheme(darkTheme = isDarkMode) {
-                MainApp(themeViewModel, captureViewModel, capturesViewModel)
+                if (!isBackendReady) {
+                    SplashScreen()
+                } else {
+                    MainApp(themeViewModel, captureViewModel, capturesViewModel)
+                }
             }
+        }
+    }
+
+    private fun checkFirebaseHealth() {
+        val TAG = "GeoProof_Init"
+        val DB_URL = "https://saveetha-geoproof-default-rtdb.asia-southeast1.firebasedatabase.app"
+        try {
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                Log.w(TAG, "FirebaseApp NOT initialized. Initializing...")
+                FirebaseApp.initializeApp(this)
+            }
+            val app = FirebaseApp.getInstance()
+            Log.i(TAG, "Firebase Config Diagnostic:")
+            Log.i(TAG, "  Project ID: ${app.options.projectId}")
+            Log.i(TAG, "  Storage Bucket: ${app.options.storageBucket}")
+            
+            val auth = FirebaseAuth.getInstance()
+            
+            // Automatically sign in anonymously on startup
+            lifecycleScope.launch {
+                try {
+                    if (auth.currentUser == null) {
+                        Log.d(TAG, "Starting automatic anonymous sign-in...")
+                        auth.signInAnonymously().await()
+                        Log.i(TAG, "Startup anonymous sign-in SUCCESS. UID: ${auth.currentUser?.uid}")
+                    } else {
+                        Log.i(TAG, "Already signed in: ${auth.currentUser?.uid}")
+                    }
+                    
+                    // Test RTDB connection
+                    val db = FirebaseDatabase.getInstance(DB_URL)
+                    Log.d(TAG, "RTDB Instance connected: ${db.reference.root}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Firebase Startup Auth/DB check FAILED", e)
+                }
+            }
+
+            Log.i(TAG, "Firebase Health Check Passed.")
+        } catch (e: Exception) {
+            Log.e(TAG, "CRITICAL: Firebase Health Check FAILED", e)
         }
     }
 }
@@ -199,13 +238,21 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
                 val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
                 VerifiedScreen(
                     verificationId = verificationId,
-                    onBack = { navController.popBackStack() },
+                    onBack = { 
+                        navController.popBackStack(Screen.Home.route, inclusive = false)
+                    },
                     onViewDetails = { 
                         navController.navigate(Screen.Details.createRoute(verificationId))
                     }
                 )
             }
-            composable(Screen.Details.route, arguments = listOf(navArgument("verificationId") { type = NavType.StringType })) { backStackEntry ->
+            composable(
+                Screen.Details.route, 
+                arguments = listOf(navArgument("verificationId") { type = NavType.StringType }),
+                deepLinks = listOf(
+                    androidx.navigation.navDeepLink { uriPattern = "https://saveetha-geotag.com/verify/{verificationId}" }
+                )
+            ) { backStackEntry ->
                 val verificationId = backStackEntry.arguments?.getString("verificationId") ?: ""
                 DetailsScreen(
                     verificationId = verificationId,
@@ -232,7 +279,6 @@ fun MainApp(themeViewModel: ThemeViewModel, captureViewModel: CaptureViewModel, 
             composable(Screen.Scan.route) { 
                 ScanScreen(
                     onScanSuccess = { content ->
-                        // Clean the scanned content
                         val id = when {
                             content.contains("ID:") -> content.substringAfter("ID:").substringBefore("|").trim()
                             content.startsWith("GP-") -> content.substringAfter("GP-").trim()

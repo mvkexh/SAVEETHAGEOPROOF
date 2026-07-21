@@ -30,12 +30,12 @@ fun AboutScreen() {
     ) {
         Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
         Spacer(modifier = Modifier.height(16.dp))
-        Text("About GeoProof", color = MaterialTheme.colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("About Saveetha Geotag", color = MaterialTheme.colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
         Text("Version 1.0.0", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            "GeoProof is a secure AI-powered image verification platform designed to ensure the authenticity of geo-tagged captures.",
+            "Saveetha Geotag is a secure AI-powered image verification platform designed to ensure the authenticity of geo-tagged captures.",
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,

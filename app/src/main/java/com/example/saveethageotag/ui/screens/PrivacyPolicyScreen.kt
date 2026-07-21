@@ -3,6 +3,7 @@ package com.example.saveethageotag.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,51 +14,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacyPolicyScreen(onBack: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        TopAppBar(
-            title = { Text("Privacy Policy", fontWeight = FontWeight.Bold) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        )
-
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            Text("Last Updated: May 2026", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .statusBarsPadding()
+                    .padding(16.dp)
+            ) {
+                Text("Last Updated: June 2026", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Text("1. Information We Collect", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("We collect location data (GPS coordinates), timestamps, and image metadata to provide the core verification service. We also collect authentication details via Firebase.")
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("2. How We Use Data", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("Data is used solely to verify the authenticity of captures and to prevent tampering. We do not sell your personal data to third parties.")
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("3. Data Security", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("We use industry-standard encryption and secure cloud storage (Firebase) to protect your information.")
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("4. Your Rights", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("You have the right to access, update, or delete your account and associated verification records at any time.")
+                PolicySection("1. Information We Collect", "GeoProof collects location data (latitude, longitude), timestamps, and camera images to provide verification services. We also collect basic device information like model and OS version.")
+                PolicySection("2. How We Use Data", "Your location and images are used solely to generate a digital proof of authenticity. This data is embedded in the image and optionally stored on our secure Firebase cloud if you choose to sync.")
+                PolicySection("3. Data Security", "We use industry-standard encryption and Firebase Security Rules to ensure that only you can access your private captures. Verified data shared with others is strictly read-only.")
+                PolicySection("4. Your Choices", "You can use GeoProof offline for local verification. Cloud synchronization is optional and can be disabled. You can delete your historical data from the app at any time.")
+            }
         }
+
+        // Floating Back Button
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.1f), CircleShape)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
+    }
+}
+
+@Composable
+fun PolicySection(title: String, content: String) {
+    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+        Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(content, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurface)
     }
 }

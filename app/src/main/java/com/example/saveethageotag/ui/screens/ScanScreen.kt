@@ -12,6 +12,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -170,27 +171,15 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
             }
         }
 
-        // Header
-        Row(
+        // Floating Back Button
+        IconButton(
+            onClick = { /* Back handled by system or navigation */ },
             modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .statusBarsPadding()
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.3f), CircleShape)
         ) {
-            IconButton(onClick = {}) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-            }
-            Text(
-                "QR Verification Scan", 
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 18.sp, 
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Spacer(modifier = Modifier.width(48.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
         }
 
         Column(
@@ -213,14 +202,23 @@ fun ScanContent(onScanSuccess: (String) -> Unit) {
                         val scanner = BarcodeScanning.getClient()
                         scanner.process(image)
                             .addOnSuccessListener { barcodes ->
-                                for (barcode in barcodes) {
-                                    barcode.rawValue?.let { content ->
-                                        onScanSuccess(content)
+                                if (barcodes.isNotEmpty()) {
+                                    for (barcode in barcodes) {
+                                        barcode.rawValue?.let { content ->
+                                            onScanSuccess(content)
+                                        }
                                     }
+                                } else {
+                                    // Image recognized but no QR found
+                                    android.widget.Toast.makeText(context, "No QR Code recognized in this image", android.widget.Toast.LENGTH_LONG).show()
                                 }
+                            }
+                            .addOnFailureListener {
+                                android.widget.Toast.makeText(context, "Image recognition failed", android.widget.Toast.LENGTH_SHORT).show()
                             }
                     } catch (e: Exception) {
                         Log.e("ScanScreen", "Gallery scan failed", e)
+                        android.widget.Toast.makeText(context, "Error opening image", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             }

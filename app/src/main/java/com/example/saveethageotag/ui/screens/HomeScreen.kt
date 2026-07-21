@@ -124,56 +124,30 @@ fun CameraContent(
     LaunchedEffect(Unit) {
         if (isPreview || fusedLocationClient == null) return@LaunchedEffect
         
+        // 1. Fetch last location IMMEDIATELY for speed
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    lastLocation = it
+                    currentAccuracy = "Accuracy: ${String.format("%.1f", it.accuracy)} m"
+                    updateAddress(context, it) { addr -> currentAddress = addr }
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e("GeoProof_Home", "Location error", e)
+        }
+
+        // 2. Continuous high-accuracy updates
         val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY, 1000
-        ).setMinUpdateDistanceMeters(0f)
-            .setWaitForAccurateLocation(true)
-            .build()
+        ).setMinUpdateIntervalMillis(500).build()
 
         val locationCallback = object : com.google.android.gms.location.LocationCallback() {
             override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
                 result.lastLocation?.let { location ->
                     lastLocation = location
                     currentAccuracy = "Accuracy: ${String.format("%.1f", location.accuracy)} m"
-                    
-                    try {
-                        val geocoder = Geocoder(context, Locale.getDefault())
-                        if (android.os.Build.VERSION.SDK_INT >= 33) {
-                            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
-                                if (addresses.isNotEmpty()) {
-                                    val addr = addresses[0]
-                                    currentAddress = addr.getAddressLine(0) ?: ""
-                                    
-                                    if (currentAddress.length < 10) {
-                                        val subThoroughfare = addr.subThoroughfare ?: ""
-                                        val thoroughfare = addr.thoroughfare ?: ""
-                                        val locality = addr.locality ?: ""
-                                        currentAddress = listOf(subThoroughfare, thoroughfare, locality)
-                                            .filter { it.isNotEmpty() }
-                                            .joinToString(", ")
-                                    }
-                                }
-                            }
-                        } else {
-                            @Suppress("DEPRECATION")
-                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                            if (!addresses.isNullOrEmpty()) {
-                                val addr = addresses[0]
-                                currentAddress = addr.getAddressLine(0) ?: ""
-                                
-                                if (currentAddress.length < 10) {
-                                    val subThoroughfare = addr.subThoroughfare ?: ""
-                                    val thoroughfare = addr.thoroughfare ?: ""
-                                    val locality = addr.locality ?: ""
-                                    currentAddress = listOf(subThoroughfare, thoroughfare, locality)
-                                        .filter { it.isNotEmpty() }
-                                        .joinToString(", ")
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        currentAddress = "Lat: ${String.format("%.6f", location.latitude)}, Lon: ${String.format("%.6f", location.longitude)}"
-                    }
+                    updateAddress(context, location) { addr -> currentAddress = addr }
                 }
             }
         }
@@ -185,7 +159,7 @@ fun CameraContent(
                 android.os.Looper.getMainLooper()
             )
         } catch (e: SecurityException) {
-            Log.e("GeoProof_Home", "Location permission missing", e)
+            Log.e("GeoProof_Home", "Location error", e)
         }
     }
 
@@ -215,7 +189,7 @@ fun CameraContent(
             preview.setSurfaceProvider(previewView.surfaceProvider)
             imageCapture = newImageCapture
         } catch (e: Exception) {
-            Log.e("GeoProof_Home", "Use case binding failed", e)
+            Log.e("GeoProof_Home", "Camera bind failed", e)
         }
     }
 
@@ -231,13 +205,11 @@ fun CameraContent(
         val photoFile = java.io.File(context.cacheDir, "capture_$timestamp.jpg")
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        Log.d("GeoProof_Home", "Capture: Initiating photo capture...")
         capture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    Log.d("GeoProof_Home", "Capture: Photo saved to cache: ${photoFile.absolutePath}")
                     captureViewModel?.updateCapture(
                         file = photoFile,
                         lat = location?.latitude ?: 0.0,
@@ -249,7 +221,7 @@ fun CameraContent(
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    Log.e("GeoProof_Home", "Capture: Photo capture failed: ${exception.message}", exception)
+                    Log.e("GeoProof_Home", "Capture failed", exception)
                 }
             }
         )
@@ -264,7 +236,7 @@ fun CameraContent(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 64.dp, bottom = 140.dp)
+                    .padding(bottom = 140.dp)
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
@@ -283,21 +255,21 @@ fun CameraContent(
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 64.dp, bottom = 140.dp)
+                    .padding(bottom = 140.dp)
             )
         }
 
-        // Top Status Badge
+        // Top Status Badge (Moved higher or integrated)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 64.dp, bottom = 140.dp)
+                .padding(bottom = 140.dp)
         ) {
             Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp)
-                    .background(Color.Black.copy(0.6f), RoundedCornerShape(20.dp))
+                    .background(Color.Black.copy(0.4f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -309,57 +281,58 @@ fun CameraContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    if (isLocationReady) "Live + GPS Connected" else "Searching for GPS...",
+                    if (isLocationReady) "Live GPS: $currentAccuracy" else "Searching for GPS...",
                     color = Color.White,
-                    fontSize = 12.sp
+                    fontSize = 11.sp
                 )
             }
         }
 
-        // Header (Top Panel from Image 3)
-        Card(
+        // Current Location Info Panel (Overlay on Camera)
+        Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .padding(16.dp)
-                .padding(top = 48.dp), // Space for status bar area
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5).copy(alpha = 0.9f)), // Light Purple/Lavender
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                .statusBarsPadding()
+                .padding(top = 80.dp, start = 16.dp, end = 16.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(id = com.example.saveethageotag.R.drawable.saveetha_logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = currentAddress, 
-                        color = Color.Black, 
-                        fontSize = 14.sp, 
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Accuracy: ${currentAccuracy.replace("Accuracy: ", "")}", 
-                        color = Color.Gray, 
-                        fontSize = 13.sp
-                    )
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = currentAddress,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 16.sp,
+                            maxLines = 2
+                        )
+                        if (lastLocation != null) {
+                            Text(
+                                text = "Lat: ${String.format("%.6f", lastLocation?.latitude)}, Lon: ${String.format("%.6f", lastLocation?.longitude)}",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Top Controls (Flash, Flip) - Floating with backgrounds for visibility
+        // Top Controls
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, start = 8.dp, end = 8.dp)
+                .statusBarsPadding()
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
         ) {
             IconButton(
                 modifier = Modifier
@@ -408,7 +381,6 @@ fun CameraContent(
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(bottom = 16.dp)
         ) {
-            // Controls
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -451,5 +423,30 @@ fun CameraContent(
                 }
             }
         }
+    }
+}
+
+private fun updateAddress(context: android.content.Context, location: android.location.Location, onResult: (String) -> Unit) {
+    try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                if (addresses.isNotEmpty()) {
+                    val addr = addresses[0]
+                    val fullAddr = addr.getAddressLine(0) ?: ""
+                    onResult(fullAddr)
+                }
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+            if (!addresses.isNullOrEmpty()) {
+                val addr = addresses[0]
+                val fullAddr = addr.getAddressLine(0) ?: ""
+                onResult(fullAddr)
+            }
+        }
+    } catch (e: Exception) {
+        onResult("Lat: ${String.format("%.6f", location.latitude)}, Lon: ${String.format("%.6f", location.longitude)}")
     }
 }

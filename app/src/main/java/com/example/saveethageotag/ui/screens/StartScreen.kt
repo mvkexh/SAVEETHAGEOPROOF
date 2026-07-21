@@ -1,7 +1,5 @@
 package com.example.saveethageotag.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -30,15 +27,6 @@ import com.example.saveethageotag.ui.theme.SaveethaGeotagTheme
 
 @Composable
 fun StartScreen(onGetStarted: () -> Unit) {
-    val isPreview = LocalInspectionMode.current
-    var visible by remember { mutableStateOf(isPreview) }
-    
-    if (!isPreview) {
-        LaunchedEffect(Unit) {
-            visible = true
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -61,45 +49,38 @@ fun StartScreen(onGetStarted: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top portion with Logo and Title
+            // This is the "2nd screen" logo part the user wants
             Column(
                 modifier = Modifier.padding(top = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn(tween(1000)) + expandVertically(tween(1000))
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = painterResource(id = R.drawable.saveetha_logo),
-                            contentDescription = "GeoProof Logo",
-                            modifier = Modifier
-                                .size(240.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        
-                        Text(
-                            "AI-Powered Geo-Tagged\nImage Verification",
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            lineHeight = 22.sp
-                        )
-                    }
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.saveetha_logo),
+                    contentDescription = "Saveetha Geotag Logo",
+                    modifier = Modifier
+                        .size(300.dp),
+                    contentScale = ContentScale.Fit
+                )
+                
+                Text(
+                    "Global Cloud-Based\nAI-Powered Verification",
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 24.sp
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Middle Illustration - Reduced size to fit one page
+            // Middle Illustration
             Image(
                 painter = painterResource(id = R.drawable.element),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(200.dp)
                     .alpha(0.8f),
                 contentScale = ContentScale.Fit
             )

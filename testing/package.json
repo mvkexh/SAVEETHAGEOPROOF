@@ -16,7 +16,10 @@
     "test:run-all":       "node scripts/runAll.js",
     "test:appium-suite":  "mocha appium-tests/[0-9]*.test.js --timeout 120000 --reporter spec --exit",
     "clear:results":      "node -e \"require('./utils/testResults').clearResults()\"",
-    "start":              "node index.js"
+    "start":              "node index.js",
+    "test:load":          "mocha load-tests/16_loadTesting.test.js --timeout 300000 --reporter spec --exit",
+    "test:load-report":   "mocha load-tests/16_loadTesting.test.js --timeout 300000 --reporter mochawesome --reporter-options reportDir=load-tests/reports,reportFilename=LoadTestReport,overwrite=true --exit",
+    "test:k6":            "node load-tests/runK6.js"
   },
   "dependencies": {
     "@wdio/appium-service": "^8.27.0",

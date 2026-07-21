@@ -42,7 +42,7 @@ class CaptureViewModel(application: Application) : AndroidViewModel(application)
         val state = _captureState.value
         val file = state.imageFile ?: return
         
-        _captureState.value = state.copy(isUploading = true)
+        _captureState.value = state.copy(isUploading = true, errorMessage = null)
         
         viewModelScope.launch {
             val metadata = mapOf(
@@ -54,18 +54,17 @@ class CaptureViewModel(application: Application) : AndroidViewModel(application)
             
             val result = firebaseManager.uploadImage(Uri.fromFile(file), metadata)
             
-            if (result.isSuccess) {
-                val id = result.getOrNull() ?: ""
+            result.onSuccess { id ->
                 _captureState.value = _captureState.value.copy(
                     isUploading = false,
                     uploadSuccess = true,
                     verificationId = id
                 )
                 onSuccess(id)
-            } else {
+            }.onFailure { e ->
                 _captureState.value = _captureState.value.copy(
                     isUploading = false,
-                    errorMessage = result.exceptionOrNull()?.message ?: "Upload failed"
+                    errorMessage = e.localizedMessage ?: "Upload failed"
                 )
             }
         }

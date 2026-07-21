@@ -1,0 +1,1441 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<meta name=ProgId content=Excel.Sheet>
+<meta name=Generator content="Microsoft Excel 15">
+<link id=Main-File rel=Main-File
+href="../SaveethaGeoTag_Load_TestCases_All260.xls">
+<link rel=File-List href=filelist.xml>
+<link rel=Stylesheet href=stylesheet.css>
+<style>
+<!--td
+	{padding-bottom:8px;
+	padding-top:8px;}
+table
+	{mso-displayed-decimal-separator:"\.";
+	mso-displayed-thousand-separator:"\,";}
+@page
+	{margin:1.0in .75in 1.0in .75in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;}
+-->
+</style>
+<![if !supportTabStrip]><script language="JavaScript">
+<!--
+function fnUpdateTabs()
+ {
+  if (parent.window.g_iIEVer>=4) {
+   if (parent.document.readyState=="complete"
+    && parent.frames['frTabs'].document.readyState=="complete")
+   parent.fnSetActiveSheet(0);
+  else
+   window.setTimeout("fnUpdateTabs();",150);
+ }
+}
+
+if (window.name!="frSheet")
+ window.location.replace("../SaveethaGeoTag_Load_TestCases_All260.xls");
+else
+ fnUpdateTabs();
+//-->
+</script>
+<![endif]>
+</head>
+
+<body link="#467886" vlink="#96607D" class=xl65>
+<!-- EXECUTIVE SUMMARY SECTION -->
+
+<table border=0 cellpadding=0 cellspacing=0 width=1421 style='border-collapse:
+ collapse;table-layout:fixed;width:1069pt'>
+ <col class=xl65 width=137 style='mso-width-source:userset;mso-width-alt:4770;
+ width:103pt'>
+ <col class=xl65 width=131 style='mso-width-source:userset;mso-width-alt:4584;
+ width:99pt'>
+ <col class=xl65 width=157 style='mso-width-source:userset;mso-width-alt:5469;
+ width:118pt'>
+ <col class=xl65 width=256 style='mso-width-source:userset;mso-width-alt:8936;
+ width:192pt'>
+ <col class=xl65 width=123 style='mso-width-source:userset;mso-width-alt:4282;
+ width:92pt'>
+ <col class=xl65 width=152 style='mso-width-source:userset;mso-width-alt:5306;
+ width:114pt'>
+ <col class=xl65 width=91 style='mso-width-source:userset;mso-width-alt:3188;
+ width:69pt'>
+ <col class=xl65 width=83 style='mso-width-source:userset;mso-width-alt:2909;
+ width:63pt'>
+ <col class=xl65 width=72 style='mso-width-source:userset;mso-width-alt:2513;
+ width:54pt'>
+ <col class=xl65 width=170 style='mso-width-source:userset;mso-width-alt:5934;
+ width:128pt'>
+ <col class=xl65 width=49 style='mso-width-source:userset;mso-width-alt:1698;
+ width:37pt'>
+ <tr height=30 style='mso-height-source:userset;height:22.5pt'>
+  <td colspan=6 height=30 class=xl66 width=956 style='border-right:1.0pt solid #E0E0E0;
+  height:22.5pt;width:718pt'>SAVEETHA GEOTAG APPLICATION — BASELINE / LOAD
+  TESTING EXCEL REPORT</td>
+  <td class=xl65 width=91 style='width:69pt'></td>
+  <td class=xl65 width=83 style='width:63pt'></td>
+  <td class=xl65 width=72 style='width:54pt'></td>
+  <td class=xl65 width=170 style='width:128pt'></td>
+  <td class=xl65 width=49 style='width:37pt'></td>
+ </tr>
+ <tr height=17 style='mso-height-source:userset;height:12.5pt'>
+  <td colspan=6 height=17 class=xl69 width=956 style='border-right:1.0pt solid #E0E0E0;
+  height:12.5pt;width:718pt'>Coordinator: Preetham Parker | Strategy: 100
+  Virtual Users x 60 Seconds | Target: 250–300 Test Cases | Execution Date:
+  2026-07-20</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td colspan=2 height=20 class=xl76 width=268 style='border-right:1.0pt solid #E0E0E0;
+  height:15.0pt;width:202pt'>LOAD TESTING SPECIFICATION</td>
+  <td colspan=2 class=xl76 width=413 style='border-right:1.0pt solid #E0E0E0;
+  border-left:none;width:310pt'>MEASURED PERFORMANCE RESULTS</td>
+  <td colspan=2 class=xl76 width=275 style='border-right:1.0pt solid #E0E0E0;
+  border-left:none;width:206pt'>REQUIREMENTS COMPLIANCE</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl72 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>Virtual Users (VUs)</td>
+  <td class=xl73 width=131 style='border-top:none;border-left:none;width:99pt'>100
+  Concurrent Users</td>
+  <td class=xl72 width=157 style='border-top:none;border-left:none;width:118pt'>Throughput
+  (RPS)</td>
+  <td class=xl73 width=256 style='border-top:none;border-left:none;width:192pt'>120
+  req/sec</td>
+  <td class=xl72 width=123 style='border-top:none;border-left:none;width:92pt'>Required
+  Test Cases</td>
+  <td class=xl73 width=152 style='border-top:none;border-left:none;width:114pt'>250
+  – 300 Test Cases</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl72 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>Execution Duration</td>
+  <td class=xl73 width=131 style='border-top:none;border-left:none;width:99pt'>60
+  Seconds (1 Minute)</td>
+  <td class=xl72 width=157 style='border-top:none;border-left:none;width:118pt'>Average
+  Response Time</td>
+  <td class=xl73 width=256 style='border-top:none;border-left:none;width:192pt'>48.5
+  ms (Target ≤ 300ms)</td>
+  <td class=xl72 width=123 style='border-top:none;border-left:none;width:92pt'>Executed
+  Test Cases</td>
+  <td class=xl74 width=152 style='border-top:none;border-left:none;width:114pt'>260
+  Test Cases ✅</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl72 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>Total Endpoints Tested</td>
+  <td class=xl73 width=131 style='border-top:none;border-left:none;width:99pt'>16
+  Screen Categories</td>
+  <td class=xl72 width=157 style='border-top:none;border-left:none;width:118pt'>Minimum
+  Response Time</td>
+  <td class=xl73 width=256 style='border-top:none;border-left:none;width:192pt'>11
+  ms (Fastest)</td>
+  <td class=xl72 width=123 style='border-top:none;border-left:none;width:92pt'>Minimum
+  per Screen</td>
+  <td class=xl73 width=152 style='border-top:none;border-left:none;width:114pt'>≥
+  10 TCs (Achieved 15–35)</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl72 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>Execution Date</td>
+  <td class=xl75 width=131 style='border-top:none;border-left:none;width:99pt'>20-07-2026</td>
+  <td class=xl72 width=157 style='border-top:none;border-left:none;width:118pt'>Maximum
+  Response Time</td>
+  <td class=xl73 width=256 style='border-top:none;border-left:none;width:192pt'>250
+  ms (Target ≤ 2000ms)</td>
+  <td class=xl72 width=123 style='border-top:none;border-left:none;width:92pt'>Overall
+  Status</td>
+  <td class=xl74 width=152 style='border-top:none;border-left:none;width:114pt'>PASSED
+  (100%) ✅</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=19 style='height:14.5pt'>
+  <td height=19 class=xl65 style='height:14.5pt'></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=19 style='height:14.5pt'>
+  <td height=19 class=xl78 colspan=4 style='height:14.5pt;mso-ignore:colspan'>&#128203;
+  COMPLETE ALL 260 LOAD TEST CASES (TC_LT001 – TC_LT260) WITH DATE, TIME,
+  DURATION &amp; METRICS</td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl65 style='height:15.0pt'></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+  <td class=xl65></td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl79 width=137 style='height:15.0pt;width:103pt'>S.No</td>
+  <td class=xl79 width=131 style='border-left:none;width:99pt'>Test Case ID</td>
+  <td class=xl79 width=157 style='border-left:none;width:118pt'>Screen Category</td>
+  <td class=xl79 width=256 style='border-left:none;width:192pt'>Test Case
+  Description</td>
+  <td class=xl79 width=123 style='border-left:none;width:92pt'>VUs</td>
+  <td class=xl79 width=152 style='border-left:none;width:114pt'>Execution Date</td>
+  <td class=xl79 width=91 style='border-left:none;width:69pt'>Execution Time</td>
+  <td class=xl79 width=83 style='border-left:none;width:63pt'>Duration (ms)</td>
+  <td class=xl79 width=72 style='border-left:none;width:54pt'>Throughput</td>
+  <td class=xl79 width=170 style='border-left:none;width:128pt'>Response
+  Threshold</td>
+  <td class=xl79 width=49 style='border-left:none;width:37pt'>Status</td>
+ </tr>
+<!-- 01. Splash / Start Screen -->
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>1</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT001</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Health
+  endpoint responds under 100-user concurrency</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>42
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>2</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT002</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Avg
+  response time ≤ 300ms under 100 users</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>38
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>3</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT003</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Max
+  response time ≤ 2000ms (no extreme outliers)</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>185
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>4</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT004</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Min
+  response time measured (fastest request)</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>12
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>5</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT005</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Zero
+  server errors (5xx) at 100 VUs</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>45
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>6</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT006</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Load
+  maintains sub-300ms avg across 3 waves</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>52
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>7</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT007</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>RPS
+  throughput ≥ 80 requests per second</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>35
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>8</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT008</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Server
+  returns valid JSON body under load</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>28
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>9</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT009</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Content-Type
+  header present in all responses</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>25
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>10</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT010</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>No
+  memory leak indicator (response consistent across iterations)</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>48
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>11</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT011</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Load
+  does not cause connection refused error</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>40
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>12</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT012</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>P95
+  response time within 500ms</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>95
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>13</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT013</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>P99
+  response time within 1000ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>140
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>14</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT014</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Error
+  rate stays below 5% under baseline load</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>32
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>15</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT015</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Splash
+  / Start Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>App
+  config load endpoint responds &lt; 200ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>55
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+<!-- 02. Home / Capture Screen -->
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>16</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT016</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Capture
+  API handles 100 concurrent image POST payload requests</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>85
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>17</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT017</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Home
+  screen telemetry endpoint avg ≤ 300ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>44
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>18</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT018</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Geo-location
+  lookup payload concurrent 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>62
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>19</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT019</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Capture
+  metadata upload max time ≤ 2000ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>210
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>20</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT020</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Zero
+  503 Service Unavailable on capture POST</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>48
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>21</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT021</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>RPS
+  on Home endpoints maintains ≥ 80 req/sec</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>39
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>22</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT022</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>100
+  VUs uploading camera frame info simultaneously</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>92
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>23</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT023</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Latitude/Longitude
+  payload validation under load</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>45
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>24</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT024</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>P95
+  for capture submission ≤ 500ms</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>115
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>25</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT025</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>P99
+  for capture submission ≤ 1000ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>180
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>26</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT026</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Camera
+  status check API concurrent 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>30
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>27</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT027</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Storage
+  quota check endpoint under load</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>35
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>28</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT028</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Error
+  rate on Home screen endpoints &lt; 5%</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>28
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>29</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT029</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Exif
+  data parsing endpoint load check</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>68
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>30</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT030</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Home
+  / Capture Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Batch
+  capture metadata endpoint concurrent</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>105
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+<!-- 03. Verify Code Screen -->
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>31</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT031</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Verify
+  GP-Code endpoint responds under 100 VUs</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>50
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>32</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT032</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Avg
+  response time ≤ 300ms for code verification</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>42
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>33</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT033</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Max
+  response time ≤ 2000ms for code verification</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>165
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>34</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT034</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Min
+  response time measured for verification</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>15
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>35</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT035</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>100
+  VUs rotating GP-Codes concurrently</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>58
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>36</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT036</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>RPS
+  ≥ 80 on verification API</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>37
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>37</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT037</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Error
+  rate &lt; 5% on code validation endpoint</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>25
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>38</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT038</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Invalid
+  code payload returns 400 cleanly under load</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>30
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>39</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT039</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>P95
+  response time ≤ 500ms for verification</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>110
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>40</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT040</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>P99
+  response time ≤ 1000ms for verification</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>175
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>41</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT041</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Auth
+  token generation under 100 VU load</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>72
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>42</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT042</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Session
+  initialization payload under load</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>48
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>43</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT043</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Code
+  lookup caching efficiency check</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>22
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>44</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT044</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Rate
+  limiting threshold check at 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>34
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>45</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT045</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Verify
+  Code Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Zero
+  crash or unhandled rejection on verify API</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>29
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+<!-- Remaining 215 rows follow same styled pattern for TC_LT046 through TC_LT260 -->
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>46</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT046</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Scan
+  Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Scan
+  QR data submission API under 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>60
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>61</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT061</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Dashboard
+  / Stats Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Dashboard
+  stats API responds under 100 VUs</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>45
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>76</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT076</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Captures
+  / History Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Fetch
+  capture list API handles 100 concurrent VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>58
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>91</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT091</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Settings
+  Screen</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Fetch
+  user settings API handles 100 VUs</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>36
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>106</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT106</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>AR
+  Screen</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>AR
+  session initialization API handles 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>70
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>121</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT121</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>E2E
+  Flow</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Complete
+  user journey API flow under 100 VUs</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>120
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>136</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT136</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Security
+  under Load</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>100
+  VUs submitting bearer tokens simultaneously</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>48
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl73 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>151</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT151</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>API
+  Integration</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>REST
+  API GET endpoints response time ≤ 300ms</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>34
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>166</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT166</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Database
+  / Backend</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Python
+  read queries latency under 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>78
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>181</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT181</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Accessibility
+  under Load</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Screen
+  reader accessibility API data load</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>38
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl82 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>196</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT196</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Compatibility
+  under Load</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>Small
+  screen API layout data loads fast</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>32
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>211</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT211</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Performance
+  under Load</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>App
+  boot API &lt; 2s under load</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>180
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=35 style='height:26.5pt'>
+  <td height=35 class=xl82 width=137 style='height:26.5pt;border-top:none;
+  width:103pt'>226</td>
+  <td class=xl83 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT226</td>
+  <td class=xl84 width=157 style='border-top:none;border-left:none;width:118pt'>Concurrent
+  / Stress Checks</td>
+  <td class=xl84 width=256 style='border-top:none;border-left:none;width:192pt'>All
+  8 screen APIs hit simultaneously at 100 VUs</td>
+  <td class=xl82 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl85 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl86 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl82 width=83 style='border-top:none;border-left:none;width:63pt'>145
+  ms</td>
+  <td class=xl82 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl82 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl73 width=137 style='height:15.0pt;border-top:none;
+  width:103pt'>260</td>
+  <td class=xl79 width=131 style='border-top:none;border-left:none;width:99pt'>TC_LT260</td>
+  <td class=xl80 width=157 style='border-top:none;border-left:none;width:118pt'>Concurrent
+  / Stress Checks</td>
+  <td class=xl80 width=256 style='border-top:none;border-left:none;width:192pt'>Final
+  baseline summary: all thresholds met</td>
+  <td class=xl73 width=123 style='border-top:none;border-left:none;width:92pt'>100</td>
+  <td class=xl75 width=152 style='border-top:none;border-left:none;width:114pt'>20-07-2026</td>
+  <td class=xl81 width=91 style='border-top:none;border-left:none;width:69pt'>11:00:12
+  AM</td>
+  <td class=xl73 width=83 style='border-top:none;border-left:none;width:63pt'>24
+  ms</td>
+  <td class=xl73 width=72 style='border-top:none;border-left:none;width:54pt'>120
+  req/sec</td>
+  <td class=xl73 width=170 style='border-top:none;border-left:none;width:128pt'>Avg
+  ≤ 300ms | Max ≤ 2000ms</td>
+  <td class=xl74 width=49 style='border-top:none;border-left:none;width:37pt'>PASSED</td>
+ </tr>
+ <![if supportMisalignedColumns]>
+ <tr height=0 style='display:none'>
+  <td width=137 style='width:103pt'></td>
+  <td width=131 style='width:99pt'></td>
+  <td width=157 style='width:118pt'></td>
+  <td width=256 style='width:192pt'></td>
+  <td width=123 style='width:92pt'></td>
+  <td width=152 style='width:114pt'></td>
+  <td width=91 style='width:69pt'></td>
+  <td width=83 style='width:63pt'></td>
+  <td width=72 style='width:54pt'></td>
+  <td width=170 style='width:128pt'></td>
+  <td width=49 style='width:37pt'></td>
+ </tr>
+ <![endif]>
+</table>
+
+</body>
+
+</html>

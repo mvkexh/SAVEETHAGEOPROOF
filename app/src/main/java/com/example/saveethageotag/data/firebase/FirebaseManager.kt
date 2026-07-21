@@ -5,32 +5,50 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.util.Base64
 import android.util.Log
 import com.example.saveethageotag.utils.QRGenerator
 import com.example.saveethageotag.ui.viewmodels.CaptureHistoryItem
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
 
 class FirebaseManager(private val context: Context) {
-    private val auth = FirebaseAuth.getInstance()
-    private val firestore = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance()
     private val TAG = "GeoProof_Firebase"
+    private val DB_URL = "https://saveetha-geoproof-default-rtdb.asia-southeast1.firebasedatabase.app"
 
-    /**
-     * Complete capture flow with CLOUD STORAGE implementation.
-     * Uploads image to Firebase Storage so it can be viewed on other devices.
-     */
-    suspend fun uploadImage(imageUri: Uri, metadata: Map<String, Any>): Result<String> {
-        return try {
-            // 1. Generate the verification code and metadata IMMEDIATELY (Local-First)
-            val verificationCode = UUID.randomUUID().toString()
+    private val auth: FirebaseAuth by lazy {
+        FirebaseAuth.getInstance()
+    }
+    
+    private val database: FirebaseDatabase by lazy {
+        FirebaseDatabase.getInstance(DB_URL)
+    }
+
+    suspend fun uploadImage(imageUri: Uri, metadata: Map<String, Any>): Result<String> = withContext(Dispatchers.Default) {
+        try {
+            Log.i(TAG, "Starting Cloud Upload to Realtime Database...")
+            
+            // 1. Check Auth (should be handled by MainActivity, but fallback here)
+            if (auth.currentUser == null) {
+                Log.d(TAG, "No user signed in. Attempting anonymous sign-in...")
+                try {
+                    auth.signInAnonymously().await()
+                    Log.i(TAG, "Anonymous sign-in SUCCESS: ${auth.currentUser?.uid}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Anonymous sign-in FAILED", e)
+                    return@withContext Result.failure(e)
+                }
+            }
+
+            val verificationCode = UUID.randomUUID().toString().take(12).uppercase()
             val timestamp = System.currentTimeMillis()
             
             val captureMetadata = hashMapOf<String, Any>(
@@ -40,118 +58,107 @@ class FirebaseManager(private val context: Context) {
                 "timestamp" to timestamp
             )
 
-            // 2. Process Image with Watermark (QR + Metadata)
+            // 2. Process Image with Watermark
             val inputStream = context.contentResolver.openInputStream(imageUri)
-            val options = BitmapFactory.Options().apply { inSampleSize = 1 } // High quality
-            val originalBitmap = BitmapFactory.decodeStream(inputStream, null, options) ?: throw Exception("Failed to load image")
+            val options = BitmapFactory.Options().apply { inSampleSize = 2 }
+            val originalBitmap = BitmapFactory.decodeStream(inputStream, null, options) ?: throw Exception("Failed to decode image")
             
             val watermarkedBitmap = QRGenerator.embedVerificationToImage(
-                originalBitmap, 
-                verificationCode, 
-                verificationCode, 
-                captureMetadata
+                originalBitmap, verificationCode, verificationCode, captureMetadata
             )
             
-            // 3. Save to Public Gallery and Internal Storage IMMEDIATELY
-            val localFile = saveBitmapToLocalStorage(watermarkedBitmap, verificationCode)
-            val localPath = localFile.absolutePath
+            // 3. Compress and convert to Base64 (Store directly in RTDB)
+            Log.d(TAG, "Compressing image for database storage...")
+            val baos = ByteArrayOutputStream()
+            watermarkedBitmap.compress(Bitmap.CompressFormat.JPEG, 60, baos)
+            val imageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT)
+            Log.i(TAG, "Image conversion to Base64 complete (${imageBase64.length / 1024} KB)")
             
-            // 4. Prepare data for Firestore
-            val captureData = hashMapOf(
-                "id" to verificationCode,
-                "verificationCode" to verificationCode,
-                "localImagePath" to localPath,
+            // 4. Local Save (Internal + Gallery)
+            val localFile = withContext(Dispatchers.IO) {
+                saveBitmapToLocalStorage(watermarkedBitmap, verificationCode)
+            }
+            
+            val captureData = hashMapOf<String, Any>(
+                "verificationId" to verificationCode,
                 "latitude" to (metadata["latitude"] ?: 0.0),
                 "longitude" to (metadata["longitude"] ?: 0.0),
                 "address" to (metadata["address"] ?: "Unknown"),
                 "accuracy" to (metadata["accuracy"] ?: "N/A"),
                 "timestamp" to timestamp,
-                "device" to Build.MODEL,
+                "deviceInfo" to Build.MODEL,
+                "userId" to (auth.currentUser?.uid ?: "anonymous"),
+                "qrData" to verificationCode,
+                "imageBase64" to imageBase64,
                 "isAuthentic" to true
             )
 
-            // 5. Save to local history file immediately
-            saveMetadataToLocalHistory(captureData)
+            // 5. Save to Local History (Unsynced)
+            withContext(Dispatchers.IO) {
+                saveMetadataToLocalHistory(captureData, localFile.absolutePath, isSynced = false)
+            }
 
-            // 6. Attempt Firebase Upload in Background (Don't block the user if it fails)
+            // 6. Push to Realtime Database
             try {
-                if (auth.currentUser == null) {
-                    auth.signInAnonymously().await()
+                Log.d(TAG, "Pushing data to path: verifications/$verificationCode")
+                database.getReference("verifications").child(verificationCode).setValue(captureData).await()
+                Log.i(TAG, "Realtime Database upload SUCCESS: $verificationCode")
+                
+                // Update Local History to Synced
+                withContext(Dispatchers.IO) {
+                    saveMetadataToLocalHistory(captureData, localFile.absolutePath, isSynced = true)
                 }
                 
-                val uid = auth.currentUser?.uid ?: "anonymous"
-                captureData["userId"] = uid
-
-                val storageRef = storage.reference.child("captures/$verificationCode.jpg")
-                val baos = ByteArrayOutputStream()
-                watermarkedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
-                val imageData = baos.toByteArray()
-                
-                storageRef.putBytes(imageData).await()
-                val downloadUrl = storageRef.downloadUrl.await().toString()
-                captureData["imageUrl"] = downloadUrl
-                
-                firestore.collection("GeoProofs").document(verificationCode).set(captureData).await()
-                Log.d(TAG, "Cloud sync successful")
+                Result.success(verificationCode)
             } catch (e: Exception) {
-                Log.e(TAG, "Cloud sync failed (Config error?), but image is saved locally: ${e.message}")
-                // We DON'T throw here so the user still gets their verification code and local image
+                Log.e(TAG, "Realtime Database upload FAILED", e)
+                Result.failure(Exception("Cloud sync failed: ${e.message}"))
             }
-            
-            Result.success(verificationCode)
         } catch (e: Exception) {
-            Log.e(TAG, "Flow failed: ${e.message}", e)
+            Log.e(TAG, "Overall capture flow FAILED", e)
             Result.failure(e)
         }
     }
 
-    private fun saveMetadataToLocalHistory(data: Map<String, Any>) {
+    private fun saveMetadataToLocalHistory(data: Map<String, Any>, localPath: String, isSynced: Boolean = false) {
         try {
             val historyFile = File(context.filesDir, "local_history.json")
             val gson = com.google.gson.Gson()
+            val type = object : com.google.gson.reflect.TypeToken<MutableList<CaptureHistoryItem>>(){}.type
+            val currentHistory: MutableList<CaptureHistoryItem> = if (historyFile.exists()) {
+                gson.fromJson(historyFile.readText(), type) ?: mutableListOf()
+            } else mutableListOf()
             
-            val currentHistory = if (historyFile.exists()) {
-                val type = object : com.google.gson.reflect.TypeToken<MutableList<CaptureHistoryItem>>(){}.type
-                val existing = gson.fromJson<MutableList<CaptureHistoryItem>>(historyFile.readText(), type)
-                existing ?: mutableListOf<CaptureHistoryItem>()
-            } else {
-                mutableListOf<CaptureHistoryItem>()
-            }
-            
-            // Map the raw data map to the CaptureHistoryItem model to ensure consistency
+            val code = data["verificationId"]?.toString() ?: ""
+            if (isSynced) currentHistory.removeAll { it.verificationCode == code }
+
             val newItem = CaptureHistoryItem(
-                id = data["verificationCode"]?.toString() ?: "",
-                verificationCode = data["verificationCode"]?.toString() ?: "",
-                localImagePath = data["localImagePath"]?.toString() ?: "",
+                id = code,
+                verificationCode = code,
+                localImagePath = localPath,
                 address = data["address"]?.toString() ?: "",
                 latitude = (data["latitude"] as? Double) ?: 0.0,
                 longitude = (data["longitude"] as? Double) ?: 0.0,
                 timestamp = (data["timestamp"] as? Long) ?: System.currentTimeMillis(),
                 accuracy = data["accuracy"]?.toString() ?: "",
-                imageUrl = data["imageUrl"]?.toString() ?: ""
+                imageUrl = "", // Uses Base64 from DB instead of URL
+                isSynced = isSynced
             )
             
             currentHistory.add(0, newItem)
             historyFile.writeText(gson.toJson(currentHistory))
-            Log.d(TAG, "Metadata saved to local history file as CaptureHistoryItem")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save to local history file", e)
+            Log.e(TAG, "Local metadata save error", e)
         }
     }
 
-    /**
-     * Saves the bitmap to the app's internal files directory AND the public gallery.
-     */
     private fun saveBitmapToLocalStorage(bitmap: Bitmap, fileName: String): File {
         // 1. Save to Internal Storage (Private)
-        val directory = File(context.filesDir, "GeoProofCaptures")
-        if (!directory.exists()) directory.mkdirs()
-        
+        val directory = File(context.filesDir, "GeoProofCaptures").apply { if (!exists()) mkdirs() }
         val internalFile = File(directory, "$fileName.jpg")
-        val out = FileOutputStream(internalFile)
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
-        out.flush()
-        out.close()
+        FileOutputStream(internalFile).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        }
 
         // 2. Save to Public Gallery (MediaStore)
         try {
@@ -159,8 +166,8 @@ class FirebaseManager(private val context: Context) {
                 put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "GeoProof_$fileName")
                 put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/SaveethaGeotag")
-                    put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/SaveethaGeotag")
+                    put(android.provider.MediaStore.Images.Media.IS_PENDING, 1)
                 }
             }
 
@@ -169,31 +176,20 @@ class FirebaseManager(private val context: Context) {
             
             uri?.let {
                 resolver.openOutputStream(it)?.use { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 }
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
-                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                    contentValues.put(android.provider.MediaStore.Images.Media.IS_PENDING, 0)
                     resolver.update(it, contentValues, null, null)
                 }
                 Log.d(TAG, "Image saved to public gallery: $it")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save to gallery", e)
+            Log.e(TAG, "Failed to save to public gallery", e)
         }
 
         return internalFile
-    }
-
-    fun signInAnonymously(onComplete: (Boolean) -> Unit) {
-        auth.signInAnonymously().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d(TAG, "Auth: Anonymous sign-in success")
-            } else {
-                Log.e(TAG, "Auth: Anonymous sign-in failed", task.exception)
-            }
-            onComplete(task.isSuccessful)
-        }
     }
 }

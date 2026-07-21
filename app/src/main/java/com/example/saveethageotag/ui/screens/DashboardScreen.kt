@@ -27,51 +27,32 @@ fun DashboardScreen(viewModel: CapturesViewModel = viewModel()) {
     val captures by viewModel.captures
     val isLoading by viewModel.isLoading
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.fetchCaptures()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
     ) {
-        // Header
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                    )
-                )
-                .padding(24.dp)
-        ) {
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
-                Text(
-                    "GEO-PROOF DASHBOARD",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    "Real-time verification analytics",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 12.sp
-                )
-            }
-            Icon(
-                Icons.Default.Analytics,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.2f),
-                modifier = Modifier.size(100.dp).align(Alignment.TopEnd).offset(x = 20.dp, y = (-20).dp)
-            )
-        }
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                Text(
+                    "GEO-PROOF ANALYTICS",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     StatCard(
@@ -81,10 +62,12 @@ fun DashboardScreen(viewModel: CapturesViewModel = viewModel()) {
                         icon = Icons.Default.Verified,
                         color = MaterialTheme.colorScheme.tertiary
                     )
+                    
+                    val syncCount = captures.count { it.imageUrl.isNotEmpty() }
                     StatCard(
                         modifier = Modifier.weight(1f),
-                        title = "Cloud Sync",
-                        value = if (captures.isNotEmpty()) "Active" else "Idle",
+                        title = "Cloud Synced",
+                        value = "$syncCount/${captures.size}",
                         icon = Icons.Default.CloudDone,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -105,9 +88,9 @@ fun DashboardScreen(viewModel: CapturesViewModel = viewModel()) {
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        SecurityItem(Icons.Default.Shield, "Anti-Tamper Protection", "Enabled")
-                        SecurityItem(Icons.Default.LocationOn, "GPS Encryption", "Active")
-                        SecurityItem(Icons.Default.QrCode, "QR Digital Signature", "Secure")
+                        SecurityItem(Icons.Default.Shield, "Anti-Tamper Protection", if (captures.isNotEmpty()) "Active" else "Idle")
+                        SecurityItem(Icons.Default.LocationOn, "GPS Encryption", if (captures.isNotEmpty()) "Active" else "Idle")
+                        SecurityItem(Icons.Default.QrCode, "QR Digital Signature", if (captures.isNotEmpty()) "Secure" else "Idle")
                     }
                 }
             }

@@ -64,17 +64,11 @@ object QRGenerator {
             val availableTextWidth = width - (padding * 2) - textLeftOffsetFromRect - padding
             
             val spannableText = SpannableStringBuilder().apply {
-                // GeoProof ID Header
-                val header = "GeoProof ID:\n"
+                // Saveetha Geotag Header
+                val header = "Saveetha Geotag\n"
                 append(header)
                 setSpan(StyleSpan(Typeface.BOLD), 0, header.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 setSpan(AbsoluteSizeSpan((baseBadgeHeight * 0.12f).toInt()), 0, header.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                
-                // UUID (Digital Signature)
-                val idStart = length
-                append(displayCode).append("\n\n")
-                setSpan(StyleSpan(Typeface.BOLD), idStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                setSpan(AbsoluteSizeSpan((baseBadgeHeight * 0.10f).toInt()), idStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 
                 // Address, Lat/Long, Timestamp
                 val detailsStart = length
@@ -130,7 +124,7 @@ object QRGenerator {
             staticLayout.draw(canvas)
             canvas.restore()
             
-            // 4. "GeoProof" small badge in corner
+            // 4. "Saveetha Geotag" small badge in corner
             val badgePaint = Paint().apply {
                 isAntiAlias = true
                 color = AndroidColor.WHITE
@@ -138,7 +132,7 @@ object QRGenerator {
                 textSize = baseBadgeHeight * 0.06f
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
-            val badgeText = "GeoProof"
+            val badgeText = "Saveetha Geotag"
             val badgeWidth = badgePaint.measureText(badgeText)
             canvas.drawText(badgeText, rect.right - badgeWidth - padding, rect.top + padding * 1.5f, badgePaint)
 

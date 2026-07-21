@@ -1,17 +1,17 @@
 package com.example.saveethageotag.ui.viewmodels
 
-import android.util.Log
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Log
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
+import java.io.File
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.io.File
 
 sealed class VerifyState {
     object Idle : VerifyState()
@@ -23,72 +23,57 @@ sealed class VerifyState {
 class VerifyViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<VerifyState>(VerifyState.Idle)
     val uiState: StateFlow<VerifyState> = _uiState
-    private val firestore = FirebaseFirestore.getInstance()
+    private val DB_URL = "https://saveetha-geoproof-default-rtdb.asia-southeast1.firebasedatabase.app"
     private val TAG = "VerifyViewModel"
 
     fun verifyCode(code: String) {
-        if (code.isBlank()) {
+        val cleanCode = code.trim().uppercase()
+        if (cleanCode.isBlank()) {
             _uiState.value = VerifyState.Error("Please enter a verification code")
             return
         }
 
         viewModelScope.launch {
             _uiState.value = VerifyState.Loading
-            val searchCode = code.trim()
-            Log.d(TAG, "Verifying code: $searchCode")
             
+            // 1. PRIMARY CLOUD CHECK (Realtime Database)
             try {
-                // 1. Try Firestore
-                try {
-                    val doc = firestore.collection("GeoProofs").document(searchCode).get().await()
-                    if (doc.exists()) {
-                        Log.d(TAG, "Verification success: Found in GeoProofs")
-                        _uiState.value = VerifyState.Success(doc.id)
-                        return@launch
-                    }
-
-                    val query = firestore.collection("GeoProofs")
-                        .whereEqualTo("verificationCode", searchCode)
-                        .get()
-                        .await()
-                        
-                    if (!query.isEmpty) {
-                        Log.d(TAG, "Verification success: Found in GeoProofs via query")
-                        _uiState.value = VerifyState.Success(query.documents[0].id)
-                        return@launch
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Firestore verification failed, trying local fallback: ${e.message}")
-                }
-
-                // 2. Fallback to Local History
-                if (checkLocalHistory(searchCode)) {
-                    Log.d(TAG, "Verification success: Found in local history")
-                    _uiState.value = VerifyState.Success(searchCode)
+                Log.d(TAG, "Checking cloud database for code: $cleanCode")
+                val db = FirebaseDatabase.getInstance(DB_URL)
+                val snapshot = db.getReference("verifications").child(cleanCode).get().await()
+                
+                if (snapshot.exists()) {
+                    Log.i(TAG, "Cloud verification SUCCESS for: $cleanCode")
+                    _uiState.value = VerifyState.Success(cleanCode)
+                    return@launch
                 } else {
-                    Log.e(TAG, "Verification failure: Code not found locally or on cloud")
-                    _uiState.value = VerifyState.Error("Invalid Verification Code: Result not found")
+                    Log.w(TAG, "Code not found in cloud: $cleanCode")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Verification error", e)
-                _uiState.value = VerifyState.Error(e.localizedMessage ?: "Verification failed")
+                Log.e(TAG, "Error connecting to cloud database", e)
             }
-        }
-    }
 
-    private fun checkLocalHistory(code: String): Boolean {
-        return try {
-            val historyFile = File(getApplication<Application>().filesDir, "local_history.json")
-            if (!historyFile.exists()) return false
-            
-            val gson = Gson()
-            val type = object : TypeToken<List<CaptureHistoryItem>>() {}.type
-            val list: List<CaptureHistoryItem> = gson.fromJson(historyFile.readText(), type)
-            
-            list.any { it.verificationCode == code || it.id == code }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to check local history", e)
-            false
+            // 2. OFFLINE LOCAL CHECK
+            try {
+                val historyFile = File(getApplication<Application>().filesDir, "local_history.json")
+                if (historyFile.exists()) {
+                    val historyJson = historyFile.readText()
+                    val type = object : TypeToken<List<CaptureHistoryItem>>() {}.type
+                    val history: List<CaptureHistoryItem> = Gson().fromJson(historyJson, type)
+                    val localItem = history.find { it.id == cleanCode || it.verificationCode == cleanCode }
+                    
+                    if (localItem != null) {
+                        Log.i(TAG, "Local match found for: $cleanCode")
+                        _uiState.value = VerifyState.Success(localItem.verificationCode)
+                        return@launch
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking local history", e)
+            }
+
+            // 3. FAIL
+            _uiState.value = VerifyState.Error("Verification ID not found on cloud. Ensure the code is correct.")
         }
     }
     
