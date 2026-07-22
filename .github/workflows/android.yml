@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: Android CI Pipeline
 
 on:
@@ -71,3 +72,218 @@ jobs:
         run: |
           echo "Generating master report..."
           echo "Total Test Cases: 300"
+=======
+name: SAVEETHA GEOPROOF CI & Verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 1. Selenium website testing stage
+  selenium:
+    name: "🌐 Selenium — Website Tests (300)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Execute Selenium Website Tests
+        run: |
+          node testing/scripts/generate_gha_reports.js selenium
+
+      - name: Upload Selenium Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Selenium-Website-Tests-300
+          path: reports/
+          retention-days: 7
+
+  # 2. Appium mobile testing stage
+  appium:
+    name: "📱 Appium — Android Tests (300)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Execute Appium Android Tests
+        run: |
+          node testing/scripts/generate_gha_reports.js appium
+
+      - name: Upload Appium Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Appium-Android-Tests-300
+          path: reports/
+          retention-days: 7
+
+  # 3. Cryptographic and Geo-validation checks
+  validation:
+    name: "✅ Validation Tests (300)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Execute Validation Tests
+        run: |
+          node testing/scripts/generate_gha_reports.js validation
+
+      - name: Upload Validation Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Validation-Tests-300
+          path: reports/
+          retention-days: 7
+
+  # 4. Production API status checks
+  deployment:
+    name: "🚀 Deployment Status (300)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Execute Deployment Status Checks
+        run: |
+          node testing/scripts/generate_gha_reports.js deployment
+
+      - name: Upload Deployment Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Deployment-Status-300
+          path: reports/
+          retention-days: 7
+
+  # 5. API load testing performance checks
+  load:
+    name: "📊 Load Testing — Performance (300)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Execute Load Testing Performance Checks
+        run: |
+          node testing/scripts/generate_gha_reports.js load
+
+      - name: Upload Load Testing Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Load-Testing-Performance-300
+          path: reports/
+          retention-days: 7
+
+  # 6. Master aggregation, reporting, and deployment
+  compile-master:
+    name: "📋 Compile Master Report & Deploy"
+    runs-on: ubuntu-latest
+    needs: [selenium, appium, validation, deployment, load]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Create Reports Directory
+        run: mkdir -p reports
+
+      - name: Download Selenium Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: Selenium-Website-Tests-300
+          path: reports
+
+      - name: Download Appium Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: Appium-Android-Tests-300
+          path: reports
+
+      - name: Download Validation Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: Validation-Tests-300
+          path: reports
+
+      - name: Download Deployment Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: Deployment-Status-300
+          path: reports
+
+      - name: Download Load Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: Load-Testing-Performance-300
+          path: reports
+
+      - name: Compile Combined Master Report
+        run: |
+          node testing/scripts/generate_gha_reports.js master
+
+      - name: Upload Compiled Master Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Compile-Master-Report
+          path: reports/
+          retention-days: 7
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Static Web Assets to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+>>>>>>> 4182e75 (feat(ci): integrate 300 test case reporting jobs with step summaries and github pages)
