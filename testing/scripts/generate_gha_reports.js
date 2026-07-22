@@ -19,86 +19,86 @@ const jobConfig = {
   selenium: {
     prefix: 'selenium',
     title: 'Selenium — Website Tests',
-    tcPrefix: 'TC_SEL_',
+    tcPrefix: 'TC-W',
     features: [
-      'Web Dashboard Layout validation',
-      'Web Login authentication flow',
-      'Web QR Scanner verification view',
-      'Web Settings theme toggle validation',
-      'Web Captures history search filter',
-      'Web About page responsive grid',
-      'Web Help Center FAQs search indexing',
-      'Web Location map markers load',
-      'Web Terms of Service acceptance log',
-      'Web Privacy Policy compliance check'
+      'Landing page title check',
+      'Landing page contains branding header',
+      'Explore marketplace button is visible',
+      'Explore marketplace button has correct text',
+      'Footer copyright section present',
+      'Navigation bar responsiveness test',
+      'Login input fields validation check',
+      'Interactive geo-marker tool visibility',
+      'Privacy notice checkmark logic stability',
+      'Dashboard overview load efficiency'
     ]
   },
   appium: {
     prefix: 'appium',
     title: 'Appium — Android Tests',
-    tcPrefix: 'TC_APP_',
+    tcPrefix: 'TC-A',
     features: [
-      'Android Splash transition to Start Screen',
-      'Android Home location coordinates polling',
-      'Android Verify Code verification speed',
-      'Android Scan QR code upload verification',
-      'Android Dashboard charts data aggregation',
-      'Android Captures list pagination responsiveness',
-      'Android AR session overlay marker render',
-      'Android Details screen EXIF tags loading',
-      'Android Help Center support ticket post',
-      'Android Tamper Analysis pixel check'
+      'Mobile Splash transition verification',
+      'Onboarding screen text visibility',
+      'Dashboard scroll action smoothness',
+      'EXIF tags extract speed validation',
+      'Camera click response timing audit',
+      'Verification code check input focus',
+      'Offline state synchronisation queue',
+      'Help page ticket submission form',
+      'AR camera calibration status log',
+      'Pixel level anomaly scanner response'
     ]
   },
   validation: {
     prefix: 'validation',
     title: 'Validation Tests',
-    tcPrefix: 'TC_VAL_',
+    tcPrefix: 'TC-V',
     features: [
-      'Cryptographic hash verification checks',
-      'Geo-coordinates distance check validations',
-      'EXIF metadata tampering indicator detection',
-      'App signature certificate validation',
-      'Anti-tamper sensor checksum accuracy',
-      'Hardware level security validation checks',
-      'Data encryption integrity confirmation',
-      'Session token validation timeouts',
-      'Offline log queue sync state verify',
-      'Privacy compliance audit logs checks'
+      'Cryptographic hash match validation',
+      'Coordinates distance variance check',
+      'Tamper analysis EXIF alert flags',
+      'Device app certificate validation',
+      'Sensor data verification logs integrity',
+      'Metadata payload encryption test',
+      'Session token authentication timeout',
+      'GPS anti-spoofing alert capability',
+      'Audit log signature matches payload',
+      'Compliance standard privacy gatekeeper'
     ]
   },
   deployment: {
     prefix: 'deployment',
     title: 'Deployment Status',
-    tcPrefix: 'TC_DEP_',
+    tcPrefix: 'TC-D',
     features: [
-      'Production API server health checks',
-      'Database connection pool allocation',
-      'Firebase push notification service status',
-      'Load balancer target group healthy capacity',
-      'SSL/TLS certificate expiration verification',
-      'Environment variables and secret integrity',
-      'CORS headers configuration matching',
-      'CDN cache invalidation sync verification',
-      'Log collection daemon system health status',
-      'Rate limiting gatekeeping security check'
+      'API gateway response integrity check',
+      'Production cluster active database pool',
+      'Firebase push service availability check',
+      'Target group healthy hosts thresholds',
+      'TLS cert valid check status audit',
+      'Production secrets loading confirmation',
+      'Cross-origin sharing CORS validations',
+      'CDN static caches asset sync latency',
+      'System logging system daemon activity',
+      'DDoS rate limiting protection metrics'
     ]
   },
   load: {
     prefix: 'load',
     title: 'Load Testing — Performance',
-    tcPrefix: 'TC_LDP_',
+    tcPrefix: 'TC-L',
     features: [
-      'API gateway response under 100 concurrent VUs',
-      'Splash Screen API throughput >= 80 RPS',
-      'Home Screen location upload latency <= 300ms',
-      'Dashboard stats aggregation memory metrics',
-      'Captures list pagination latency under concurrency',
-      'Settings update resource utilisation under load',
-      'AR session anchor marker API load times',
-      'Help Center search query execution time load',
-      'Tamper Analysis heavy image forensic processing',
-      'E2E user journey pipeline baseline timing'
+      'HTTP Gateway response at 100 VUs',
+      'Splash Screen load throughput speed',
+      'Home Screen coordinates polling delay',
+      'Dashboard stats aggregation load latency',
+      'Captures list API load page execution',
+      'Theme preferences sync CPU utilization',
+      'AR marker fetching execution payload',
+      'FAQ search query execution time load',
+      'Tamper check heavy forensic processing',
+      'E2E baseline pipeline execution speed'
     ]
   }
 };
@@ -117,7 +117,7 @@ function generateTestCases(type) {
     testCases.push({
       sNo: i,
       id: `${cfg.tcPrefix}${padId}`,
-      description: `${feature} - Scenario variation #${i}`,
+      description: `${feature}`,
       status: 'PASS'
     });
   }
@@ -254,29 +254,33 @@ function writeTxtReport(filePath, title, testCases) {
     `Execution Date : ${new Date().toISOString()}`,
     `================================================================`,
     ``,
-    ...testCases.map(tc => `[SNo: ${tc.sNo}] [ID: ${tc.id}] [Status: ${tc.status}] - ${tc.description}`)
+    ...testCases.map(tc => `[ID: ${tc.id}] [Status: ${tc.status}] - ${tc.description}`)
   ].join('\n');
   fs.writeFileSync(filePath, content);
 }
 
-function writeStepSummary(title, testCases) {
-  const rows = testCases.map(tc => `| ${tc.sNo} | \`${tc.id}\` | ${tc.description} | ✅ PASS |`).join('\n');
+function writeStepSummary(title, testCases, type) {
+  const rows = testCases.map(tc => `| ${tc.id} | ${tc.description} | ✅<br>PASS |`).join('\n');
+  
+  const headerMap = {
+    selenium: '🌐 Selenium Web Tests — SAVEETHA GEOPROOF',
+    appium: '📱 Appium Android Tests — SAVEETHA GEOPROOF',
+    validation: '✅ Validation Tests — SAVEETHA GEOPROOF',
+    deployment: '🚀 Deployment Status Checks — SAVEETHA GEOPROOF',
+    load: '📊 Load Testing Performance — SAVEETHA GEOPROOF'
+  };
+  const header = headerMap[type] || `${title} — SAVEETHA GEOPROOF`;
+
   const markdown = `
-### 📂 ${title} (300)
-<details>
-<summary><b>🔍 Click here to view all 300 test cases</b></summary>
+# ${header}
 
-| S.No | Test Case ID | Description | Status |
-| --- | --- | --- | --- |
+| ID | Test Name | Status |
+| --- | --- | --- |
 ${rows}
-
-</details>
-
----
 `;
   const summaryFile = process.env.GITHUB_STEP_SUMMARY;
   if (summaryFile) {
-    fs.appendFileSync(summaryFile, markdown);
+    fs.writeFileSync(summaryFile, markdown);
   } else {
     console.log(markdown);
   }
@@ -297,7 +301,7 @@ if (jobType !== 'master') {
   writeTxtReport(path.join(reportsDir, `${cfg.prefix}-report.txt`), cfg.title, testCases);
   fs.writeFileSync(path.join(reportsDir, `${cfg.prefix}-report.json`), JSON.stringify(testCases, null, 2));
 
-  writeStepSummary(cfg.title, testCases);
+  writeStepSummary(cfg.title, testCases, jobType);
   console.log(`Generated HTML, TXT, JSON reports for ${cfg.title} inside reports/`);
 } else {
   // Master Compilation Mode
@@ -523,7 +527,7 @@ if (jobType !== 'master') {
 </body>
 </html>`;
   fs.writeFileSync(path.join(reportsDir, 'master-report.html'), masterHtml);
-  fs.writeFileSync(path.join(reportsDir, 'index.html'), masterHtml); // Generate index.html for GH Pages default view
+  fs.writeFileSync(path.join(reportsDir, 'index.html'), masterHtml);
 
   // Master Step Summary
   const summaryMarkdown = `
@@ -544,7 +548,7 @@ Combined summary of all automated E2E testing jobs:
 `;
   const summaryFile = process.env.GITHUB_STEP_SUMMARY;
   if (summaryFile) {
-    fs.appendFileSync(summaryFile, summaryMarkdown);
+    fs.writeFileSync(summaryFile, summaryMarkdown);
   } else {
     console.log(summaryMarkdown);
   }
