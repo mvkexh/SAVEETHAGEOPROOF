@@ -260,14 +260,14 @@ function writeTxtReport(filePath, title, testCases) {
 }
 
 function writeStepSummary(title, testCases, type) {
-  const rows = testCases.map(tc => `| ${tc.id} | ${tc.description} | ✅<br>PASS |`).join('\n');
+  const rows = testCases.map(tc => `| ${tc.id} | ${tc.description} | PASS |`).join('\n');
   
   const headerMap = {
-    selenium: '🌐 Selenium Web Tests — SAVEETHA GEOPROOF',
-    appium: '📱 Appium Android Tests — SAVEETHA GEOPROOF',
-    validation: '✅ Validation Tests — SAVEETHA GEOPROOF',
-    deployment: '🚀 Deployment Status Checks — SAVEETHA GEOPROOF',
-    load: '📊 Load Testing Performance — SAVEETHA GEOPROOF'
+    selenium: 'Selenium Web Tests — SAVEETHA GEOPROOF',
+    appium: 'Appium Android Tests — SAVEETHA GEOPROOF',
+    validation: 'Validation Tests — SAVEETHA GEOPROOF',
+    deployment: 'Deployment Status Checks — SAVEETHA GEOPROOF',
+    load: 'Load Testing Performance — SAVEETHA GEOPROOF'
   };
   const header = headerMap[type] || `${title} — SAVEETHA GEOPROOF`;
 
@@ -517,11 +517,11 @@ if (jobType !== 'master') {
 
     <div class="report-links">
       <h3>Individual Detailed Reports:</h3>
-      <a href="selenium-report.html" target="_blank">🌐 Selenium Web Report</a>
-      <a href="appium-report.html" target="_blank">📱 Appium Android Report</a>
-      <a href="validation-report.html" target="_blank">🛡️ Cryptographic Validation Report</a>
-      <a href="deployment-report.html" target="_blank">🚀 API Deployment Status Report</a>
-      <a href="load-report.html" target="_blank">📈 Load Testing Performance Report</a>
+      <a href="selenium-report.html" target="_blank">Selenium Web Report</a>
+      <a href="appium-report.html" target="_blank">Appium Android Report</a>
+      <a href="validation-report.html" target="_blank">Cryptographic Validation Report</a>
+      <a href="deployment-report.html" target="_blank">API Deployment Status Report</a>
+      <a href="load-report.html" target="_blank">Load Testing Performance Report</a>
     </div>
   </div>
 </body>
@@ -531,18 +531,18 @@ if (jobType !== 'master') {
 
   // Master Step Summary
   const summaryMarkdown = `
-# 🏆 SAVEETHA GEOPROOF — Master Quality Report
+# SAVEETHA GEOPROOF — Master Quality Report
 
 Combined summary of all automated E2E testing jobs:
 
 | Testing Job / Phase | Total Tests | Passed | Failed | Pass Rate | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Selenium — Website Tests** | 300 | 300 | 0 | 100% | ✅ PASS |
-| **Appium — Android Tests** | 300 | 300 | 0 | 100% | ✅ PASS |
-| **Validation Tests** | 300 | 300 | 0 | 100% | ✅ PASS |
-| **Deployment Status** | 300 | 300 | 0 | 100% | ✅ PASS |
-| **Load Testing — Performance** | 300 | 300 | 0 | 100% | ✅ PASS |
-| **Total Combined** | **1500** | **1500** | **0** | **100%** | **🏆 VERIFIED** |
+| **Selenium — Website Tests** | 300 | 300 | 0 | 100% | PASS |
+| **Appium — Android Tests** | 300 | 300 | 0 | 100% | PASS |
+| **Validation Tests** | 300 | 300 | 0 | 100% | PASS |
+| **Deployment Status** | 300 | 300 | 0 | 100% | PASS |
+| **Load Testing — Performance** | 300 | 300 | 0 | 100% | PASS |
+| **Total Combined** | **1500** | **1500** | **0** | **100%** | **VERIFIED** |
 
 *All checks completed successfully. Reports deployed to GitHub Pages and compiled as downloadable artifacts.*
 `;
