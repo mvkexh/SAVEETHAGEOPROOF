@@ -1,4 +1,4 @@
-name: SAVEETHA GEOPROOF CI & Verification
+name: SAVEETHA GEOPROOF E2E Verification
 
 on:
   push:
