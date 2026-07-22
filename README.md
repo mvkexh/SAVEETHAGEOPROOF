@@ -213,7 +213,7 @@ Shalini M K
 B.Tech Computer Science and Engineering
 Saveetha Institute of Medical and Technical Sciences (SIMATS), Chennai
 
-GitHub: https://github.com/shalz-collab
+GitHub: https://github.com/mvkexh
 
 ---
 
