@@ -13,6 +13,8 @@
     "test:report":        "node reports/generateExcelReport.js",
     "test:html-report":   "node reports/generateHtmlReport.js",
     "test:allure-open":   "allure generate reports/allure-results --clean -o reports/allure-report && allure open reports/allure-report",
+    "test:gha-selenium":  "node scripts/generate_gha_reports.js selenium",
+    "test:gha-master":    "node scripts/generate_gha_reports.js master",
     "test:run-all":       "node scripts/runAll.js",
     "test:appium-suite":  "mocha appium-tests/[0-9]*.test.js --timeout 120000 --reporter spec --exit",
     "clear:results":      "node -e \"require('./utils/testResults').clearResults()\"",

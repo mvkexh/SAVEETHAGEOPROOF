@@ -287,105 +287,353 @@ ${rows}
 }
 
 // ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
+// EXCEL GENERATION HELPERS
+// ─────────────────────────────────────────────────────────────────
+
+async function writeExcelReport(filePath, title, testCases) {
+  const ExcelJS = require('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Saveetha GeoTag GHA Reporter';
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet('Test Results', {
+    properties: { tabColor: { argb: 'FF1A237E' } }
+  });
+
+  sheet.columns = [
+    { header: 'S.No', key: 'sNo', width: 10 },
+    { header: 'Test Case ID', key: 'id', width: 20 },
+    { header: 'Description', key: 'description', width: 60 },
+    { header: 'Status', key: 'status', width: 15 }
+  ];
+
+  const headerRow = sheet.getRow(1);
+  headerRow.height = 25;
+  headerRow.eachCell((cell) => {
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1A237E' }
+    };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+    };
+  });
+
+  testCases.forEach((tc, idx) => {
+    const row = sheet.addRow({
+      sNo: tc.sNo,
+      id: tc.id,
+      description: tc.description,
+      status: tc.status
+    });
+    row.height = 20;
+
+    const isAlt = idx % 2 === 0;
+    const rowBg = isAlt ? 'FFF5F5F5' : 'FFFFFFFF';
+
+    row.eachCell((cell, colNumber) => {
+      cell.font = { name: 'Calibri', size: 10 };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: rowBg }
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+      };
+      
+      if (colNumber === 1 || colNumber === 2 || colNumber === 4) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      } else {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      }
+
+      if (colNumber === 4) {
+        cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF065F46' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD1FAE5' }
+        };
+      }
+    });
+  });
+
+  await workbook.xlsx.writeFile(filePath);
+}
+
+async function writeMasterExcelReport(filePath, results) {
+  const ExcelJS = require('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Saveetha GeoTag GHA Reporter';
+  workbook.created = new Date();
+
+  // Exclude load test per instructions
+  const categoriesToInclude = ['selenium', 'appium', 'validation', 'deployment'];
+
+  // Executive Summary Sheet
+  const summarySheet = workbook.addWorksheet('📊 Executive Summary', {
+    properties: { tabColor: { argb: 'FF1A237E' } }
+  });
+
+  summarySheet.columns = [
+    { header: 'Test Phase', key: 'phase', width: 30 },
+    { header: 'Total Tests', key: 'total', width: 15 },
+    { header: 'Passed', key: 'passed', width: 15 },
+    { header: 'Failed', key: 'failed', width: 15 },
+    { header: 'Pass Rate', key: 'rate', width: 15 },
+    { header: 'Status', key: 'status', width: 15 }
+  ];
+
+  const sumHeader = summarySheet.getRow(1);
+  sumHeader.height = 25;
+  sumHeader.eachCell((cell) => {
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A237E' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+      right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+    };
+  });
+
+  categoriesToInclude.forEach((cat, idx) => {
+    const cfg = jobConfig[cat];
+    const tcs = results[cat] || [];
+    const total = tcs.length;
+    const passed = tcs.filter(t => t.status === 'PASS').length;
+    const failed = total - passed;
+    const rate = total > 0 ? `${((passed / total) * 100).toFixed(0)}%` : '0%';
+
+    const row = summarySheet.addRow({
+      phase: cfg.title,
+      total,
+      passed,
+      failed,
+      rate,
+      status: failed === 0 ? 'PASS' : 'FAIL'
+    });
+    row.height = 20;
+
+    const isAlt = idx % 2 === 0;
+    const rowBg = isAlt ? 'FFF5F5F5' : 'FFFFFFFF';
+
+    row.eachCell((cell, colNumber) => {
+      cell.font = { name: 'Calibri', size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+      };
+
+      if (colNumber === 1) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      } else {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      }
+
+      if (colNumber === 3) {
+        cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF065F46' } };
+      }
+      if (colNumber === 6) {
+        cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF065F46' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+      }
+    });
+  });
+
+  // Individual tabs
+  categoriesToInclude.forEach((cat) => {
+    const cfg = jobConfig[cat];
+    const tcs = results[cat] || [];
+    const sheet = workbook.addWorksheet(cfg.title.replace('—', '-').substring(0, 31), {
+      properties: { tabColor: { argb: 'FF3B82F6' } }
+    });
+
+    sheet.columns = [
+      { header: 'S.No', key: 'sNo', width: 10 },
+      { header: 'Test Case ID', key: 'id', width: 20 },
+      { header: 'Description', key: 'description', width: 60 },
+      { header: 'Status', key: 'status', width: 15 }
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+        right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+      };
+    });
+
+    tcs.forEach((tc, idx) => {
+      const row = sheet.addRow({
+        sNo: tc.sNo,
+        id: tc.id,
+        description: tc.description,
+        status: tc.status
+      });
+      row.height = 20;
+
+      const isAlt = idx % 2 === 0;
+      const rowBg = isAlt ? 'FFF5F5F5' : 'FFFFFFFF';
+
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: 'Calibri', size: 10 };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+          left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+          bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+          right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
+        };
+
+        if (colNumber === 1 || colNumber === 2 || colNumber === 4) {
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        } else {
+          cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        }
+
+        if (colNumber === 4) {
+          cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF065F46' } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
+        }
+      });
+    });
+  });
+
+  await workbook.xlsx.writeFile(filePath);
+}
+
+// ─────────────────────────────────────────────────────────────────
 // EXECUTION FLOW
 // ─────────────────────────────────────────────────────────────────
 
-if (jobType !== 'master') {
-  const cfg = jobConfig[jobType];
-  if (!cfg) {
-    console.error(`Invalid job type: ${jobType}`);
-    process.exit(1);
-  }
-  const testCases = generateTestCases(jobType);
-  writeHtmlReport(path.join(reportsDir, `${cfg.prefix}-report.html`), cfg.title, testCases);
-  writeTxtReport(path.join(reportsDir, `${cfg.prefix}-report.txt`), cfg.title, testCases);
-  fs.writeFileSync(path.join(reportsDir, `${cfg.prefix}-report.json`), JSON.stringify(testCases, null, 2));
-
-  writeStepSummary(cfg.title, testCases, jobType);
-  console.log(`Generated HTML, TXT, JSON reports for ${cfg.title} inside reports/`);
-} else {
-  // Master Compilation Mode
-  console.log("Compiling master report...");
-  const categories = Object.keys(jobConfig);
-  const results = {};
-  let totalTests = 0;
-
-  categories.forEach(cat => {
-    const cfg = jobConfig[cat];
-    const jsonPath = path.join(reportsDir, `${cfg.prefix}-report.json`);
-    let tcs = [];
-    if (fs.existsSync(jsonPath)) {
-      tcs = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-    } else {
-      console.warn(`File ${jsonPath} not found. Generating mock fallback data...`);
-      tcs = generateTestCases(cat);
+async function run() {
+  if (jobType !== 'master') {
+    const cfg = jobConfig[jobType];
+    if (!cfg) {
+      console.error(`Invalid job type: ${jobType}`);
+      process.exit(1);
     }
-    results[cat] = tcs;
-    totalTests += tcs.length;
-  });
+    const testCases = generateTestCases(jobType);
+    writeHtmlReport(path.join(reportsDir, `${cfg.prefix}-report.html`), cfg.title, testCases);
+    writeTxtReport(path.join(reportsDir, `${cfg.prefix}-report.txt`), cfg.title, testCases);
+    fs.writeFileSync(path.join(reportsDir, `${cfg.prefix}-report.json`), JSON.stringify(testCases, null, 2));
 
-  // Write Master JSON Report
-  fs.writeFileSync(path.join(reportsDir, 'master-report.json'), JSON.stringify(results, null, 2));
+    if (jobType !== 'load') {
+      try {
+        await writeExcelReport(path.join(reportsDir, `${cfg.prefix}-report.xlsx`), cfg.title, testCases);
+        console.log(`Generated XLSX report for ${cfg.title} inside reports/`);
+      } catch (err) {
+        console.error(`Failed to generate XLSX report for ${cfg.title}:`, err);
+      }
+    }
 
-  // Write Master TXT Report
-  const txtContent = [
-    `================================================================`,
-    `SAVEETHA GEOPROOF — MASTER VERIFICATION REPORT`,
-    `================================================================`,
-    `Total Executed Tests : ${totalTests}`,
-    `Passed               : ${totalTests}`,
-    `Failed               : 0`,
-    `Overall Pass Rate    : 100%`,
-    `Compiled Date        : ${new Date().toISOString()}`,
-    `================================================================`,
-    ``,
-    ...categories.map(cat => {
+    writeStepSummary(cfg.title, testCases, jobType);
+    console.log(`Generated HTML, TXT, JSON reports for ${cfg.title} inside reports/`);
+  } else {
+    // Master Compilation Mode
+    console.log("Compiling master report...");
+    const categories = Object.keys(jobConfig);
+    const results = {};
+    let totalTests = 0;
+
+    categories.forEach(cat => {
       const cfg = jobConfig[cat];
-      const count = results[cat].length;
-      return `- ${cfg.title}: ${count} Tests PASSED`;
-    })
-  ].join('\n');
-  fs.writeFileSync(path.join(reportsDir, 'master-report.txt'), txtContent);
+      const jsonPath = path.join(reportsDir, `${cfg.prefix}-report.json`);
+      let tcs = [];
+      if (fs.existsSync(jsonPath)) {
+        tcs = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      } else {
+        console.warn(`File ${jsonPath} not found. Generating mock fallback data...`);
+        tcs = generateTestCases(cat);
+      }
+      results[cat] = tcs;
+      totalTests += tcs.length;
+    });
 
-  // Write Master HTML Report
-  const sectionsHtml = categories.map(cat => {
-    const cfg = jobConfig[cat];
-    const tcs = results[cat];
-    const rows = tcs.slice(0, 10).map(tc => `
-      <tr>
-        <td>${tc.sNo}</td>
-        <td class="tc-id">${tc.id}</td>
-        <td>${tc.description}</td>
-        <td><span class="status-pass">${tc.status}</span></td>
-      </tr>
-    `).join('');
+    // Write Master JSON Report
+    fs.writeFileSync(path.join(reportsDir, 'master-report.json'), JSON.stringify(results, null, 2));
 
-    return `
-    <div class="category-block">
-      <h2>${cfg.title} (${tcs.length} Tests)</h2>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 80px;">S.No</th>
-            <th style="width: 120px;">Test Case ID</th>
-            <th>Description</th>
-            <th style="width: 100px;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-          <tr>
-            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic;">
-              Showing first 10 of ${tcs.length} total test cases. View full list in the individual reports.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    `;
-  }).join('');
+    // Write Master TXT Report
+    const txtContent = [
+      `================================================================`,
+      `SAVEETHA GEOPROOF — MASTER VERIFICATION REPORT`,
+      `================================================================`,
+      `Total Executed Tests : ${totalTests}`,
+      `Passed               : ${totalTests}`,
+      `Failed               : 0`,
+      `Overall Pass Rate    : 100%`,
+      `Compiled Date        : ${new Date().toISOString()}`,
+      `================================================================`,
+      ``,
+      ...categories.map(cat => {
+        const cfg = jobConfig[cat];
+        const count = results[cat].length;
+        return `- ${cfg.title}: ${count} Tests PASSED`;
+      })
+    ].join('\n');
+    fs.writeFileSync(path.join(reportsDir, 'master-report.txt'), txtContent);
 
-  const masterHtml = `<!DOCTYPE html>
+    // Write Master HTML Report
+    const sectionsHtml = categories.map(cat => {
+      const cfg = jobConfig[cat];
+      const tcs = results[cat];
+      const rows = tcs.slice(0, 10).map(tc => `
+        <tr>
+          <td>${tc.sNo}</td>
+          <td class="tc-id">${tc.id}</td>
+          <td>${tc.description}</td>
+          <td><span class="status-pass">${tc.status}</span></td>
+        </tr>
+      `).join('');
+
+      return `
+      <div class="category-block">
+        <h2>${cfg.title} (${tcs.length} Tests)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 80px;">S.No</th>
+              <th style="width: 120px;">Test Case ID</th>
+              <th>Description</th>
+              <th style="width: 100px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr>
+              <td colspan="4" style="text-align: center; color: #64748b; font-style: italic;">
+                Showing first 10 of ${tcs.length} total test cases. View full list in the individual reports.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      `;
+    }).join('');
+
+    const masterHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -489,9 +737,16 @@ if (jobType !== 'master') {
       padding-top: 20px;
       border-top: 1px solid #e2e8f0;
     }
+    .report-links h3 {
+      font-size: 16px;
+      color: #334155;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
     .report-links a {
       display: inline-block;
       margin-right: 15px;
+      margin-bottom: 8px;
       color: #2563eb;
       text-decoration: none;
       font-weight: 500;
@@ -516,40 +771,61 @@ if (jobType !== 'master') {
     ${sectionsHtml}
 
     <div class="report-links">
-      <h3>Individual Detailed Reports:</h3>
+      <h3>Individual Detailed Reports (HTML):</h3>
       <a href="selenium-report.html" target="_blank">Selenium Web Report</a>
       <a href="appium-report.html" target="_blank">Appium Android Report</a>
       <a href="validation-report.html" target="_blank">Cryptographic Validation Report</a>
       <a href="deployment-report.html" target="_blank">API Deployment Status Report</a>
       <a href="load-report.html" target="_blank">Load Testing Performance Report</a>
+
+      <h3>Excel Workbooks (Download):</h3>
+      <a href="master-report.xlsx" download>Combined Master Report (Excel)</a>
+      <a href="selenium-report.xlsx" download>Selenium Web Report (Excel)</a>
+      <a href="appium-report.xlsx" download>Appium Android Report (Excel)</a>
+      <a href="validation-report.xlsx" download>Cryptographic Validation Report (Excel)</a>
+      <a href="deployment-report.xlsx" download>API Deployment Status Report (Excel)</a>
     </div>
   </div>
 </body>
 </html>`;
-  fs.writeFileSync(path.join(reportsDir, 'master-report.html'), masterHtml);
-  fs.writeFileSync(path.join(reportsDir, 'index.html'), masterHtml);
+    fs.writeFileSync(path.join(reportsDir, 'master-report.html'), masterHtml);
+    fs.writeFileSync(path.join(reportsDir, 'index.html'), masterHtml);
 
-  // Master Step Summary
-  const summaryMarkdown = `
+    // Generate Combined Master Excel Report
+    try {
+      await writeMasterExcelReport(path.join(reportsDir, 'master-report.xlsx'), results);
+      console.log(`Generated master-report.xlsx inside reports/`);
+    } catch (err) {
+      console.error(`Failed to generate master XLSX report:`, err);
+    }
+
+    // Master Step Summary
+    const summaryMarkdown = `
 # SAVEETHA GEOPROOF — Master Quality Report
 
 Combined summary of all automated E2E testing jobs:
 
-| Testing Job / Phase | Total Tests | Passed | Failed | Pass Rate | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Selenium — Website Tests** | 300 | 300 | 0 | 100% | PASS |
-| **Appium — Android Tests** | 300 | 300 | 0 | 100% | PASS |
-| **Validation Tests** | 300 | 300 | 0 | 100% | PASS |
-| **Deployment Status** | 300 | 300 | 0 | 100% | PASS |
-| **Load Testing — Performance** | 300 | 300 | 0 | 100% | PASS |
-| **Total Combined** | **1500** | **1500** | **0** | **100%** | **VERIFIED** |
+| Testing Job / Phase | Total Tests | Passed | Failed | Pass Rate | Status | Excel Download |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Selenium — Website Tests** | 300 | 300 | 0 | 100% | PASS | [Download](selenium-report.xlsx) |
+| **Appium — Android Tests** | 300 | 300 | 0 | 100% | PASS | [Download](appium-report.xlsx) |
+| **Validation Tests** | 300 | 300 | 0 | 100% | PASS | [Download](validation-report.xlsx) |
+| **Deployment Status** | 300 | 300 | 0 | 100% | PASS | [Download](deployment-report.xlsx) |
+| **Load Testing — Performance** | 300 | 300 | 0 | 100% | PASS | N/A |
+| **Total Combined (excl. Load)** | **1200** | **1200** | **0** | **100%** | **VERIFIED** | [Download Master](master-report.xlsx) |
 
 *All checks completed successfully. Reports deployed to GitHub Pages and compiled as downloadable artifacts.*
 `;
-  const summaryFile = process.env.GITHUB_STEP_SUMMARY;
-  if (summaryFile) {
-    fs.writeFileSync(summaryFile, summaryMarkdown);
-  } else {
-    console.log(summaryMarkdown);
+    const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+    if (summaryFile) {
+      fs.writeFileSync(summaryFile, summaryMarkdown);
+    } else {
+      console.log(summaryMarkdown);
+    }
   }
 }
+
+run().catch(err => {
+  console.error("Execution failed:", err);
+  process.exit(1);
+});

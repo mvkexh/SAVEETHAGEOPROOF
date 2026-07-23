@@ -32,6 +32,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install exceljs
+        run: npm install exceljs
+
       - name: Execute Selenium Website Tests
         run: |
           node testing/scripts/generate_gha_reports.js selenium
@@ -55,6 +58,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Install exceljs
+        run: npm install exceljs
 
       - name: Execute Appium Android Tests
         run: |
@@ -80,6 +86,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Install exceljs
+        run: npm install exceljs
+
       - name: Execute Validation Tests
         run: |
           node testing/scripts/generate_gha_reports.js validation
@@ -103,6 +112,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Install exceljs
+        run: npm install exceljs
 
       - name: Execute Deployment Status Checks
         run: |
@@ -188,6 +200,9 @@ jobs:
         with:
           name: Load-Testing-Performance-300
           path: reports
+
+      - name: Install exceljs
+        run: npm install exceljs
 
       - name: Compile Combined Master Report
         run: |
